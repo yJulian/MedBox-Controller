@@ -1,18 +1,18 @@
 #include <Arduino.h>
+#include <gpio.hpp>
+#include <wifi_helper.hpp>
 
-// put function declarations here:
-int myFunction(int, int);
 
 void setup() {
-  // put your setup code here, to run once:
-  int result = myFunction(2, 3);
+  // Setup serial communication at 115200 baud rate
+  Serial.begin(115200);
+  // Initialize GPIOs
+  initializeGPIO();
+
+  // Setup WiFi connection
+  connectWifi();
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
-}
-
-// put function definitions here:
-int myFunction(int x, int y) {
-  return x + y;
 }
