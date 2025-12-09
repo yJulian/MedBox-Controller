@@ -210,20 +210,6 @@ void WifiHelper::startGattServer() {
 }
 
 void WifiHelper::loop() {
-    // Beispiel: alle 1s einen Counter per Notify schicken, wenn verbunden
-    if (deviceConnected) {
-        valueCounter++;
-        //std::string value = "Count: " + std::to_string(valueCounter);
-        std::string value = WiFi.macAddress().c_str();
-        pCharacteristic->setValue(value);
-        pCharacteristic->notify();  // Notify an Client
-        Serial.print("[BLE] Notify: ");
-        Serial.println(value.c_str());
-        delay(1000);
-    } else {
-        delay(200);
-    }
-
     // Connection-Status Änderungen handeln (neu werben nach Disconnect)
     if (!deviceConnected && oldDeviceConnected) {
         // kurz warten, sonst meckern manche Geräte

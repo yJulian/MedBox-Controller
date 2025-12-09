@@ -11,14 +11,9 @@ void setup() {
   Serial.begin(115200);
   // Initialize GPIOs
   initializeGPIO();
-
-  
-  
   
   // Setup WiFi connection
-  wifi_loop = true;
-  wifiHelper.connect();
-  wifi_loop = false;
+  wifi_loop = !wifiHelper.connect();
 }
 
 void loop() {
