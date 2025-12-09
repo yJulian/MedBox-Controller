@@ -15,13 +15,10 @@ public:
     
 private:
     WebSocketsClient webSocket;
-    unsigned long lastPingTime;
-    unsigned long lastReconnectAttempt;
     bool connected;
     
     void onWebSocketEvent(WStype_t type, uint8_t* payload, size_t length);
     static void webSocketEvent(WStype_t type, uint8_t* payload, size_t length);
-    void reconnect();
     
     static WebSocketHelper* instance;  // For static callback
 };

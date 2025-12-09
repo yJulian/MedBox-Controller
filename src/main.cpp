@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <WiFi.h>
 #include <gpio.hpp>
 #include <wifi_helper.hpp>
 #include <websocket_helper.hpp>
@@ -32,6 +33,13 @@ void loop() {
   } else {
     // WiFi is connected, run WebSocket loop
     wsHelper.loop();
+    
+    // Check if WiFi is still connected
+    if (WiFi.status() != WL_CONNECTED) {
+      Serial.println("WiFi disconnected! Restarting...");
+      delay(1000);
+      ESP.restart();
+    }
   }
   // put your main code here, to run repeatedly:
 }

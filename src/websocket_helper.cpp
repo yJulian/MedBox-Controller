@@ -5,8 +5,6 @@ WebSocketHelper* WebSocketHelper::instance = nullptr;
 
 WebSocketHelper::WebSocketHelper() {
     connected = false;
-    lastPingTime = 0;
-    lastReconnectAttempt = 0;
     instance = this;
 }
 
@@ -34,15 +32,6 @@ void WebSocketHelper::begin() {
 
 void WebSocketHelper::loop() {
     webSocket.loop();
-    
-    // Additional ping handling if needed
-    if (connected) {
-        unsigned long currentTime = millis();
-        if (currentTime - lastPingTime >= WS_PING_INTERVAL) {
-            // WebSocket library handles ping automatically with heartbeat
-            lastPingTime = currentTime;
-        }
-    }
 }
 
 bool WebSocketHelper::isConnected() {
@@ -68,7 +57,6 @@ void WebSocketHelper::onWebSocketEvent(WStype_t type, uint8_t* payload, size_t l
         case WStype_CONNECTED:
             Serial.printf("[WS] Connected to url: %s\n", payload);
             connected = true;
-            lastPingTime = millis();
             
             // Send initial message to server
             webSocket.sendTXT("ESP32 Connected");
@@ -102,11 +90,4 @@ void WebSocketHelper::onWebSocketEvent(WStype_t type, uint8_t* payload, size_t l
     }
 }
 
-void WebSocketHelper::reconnect() {
-    unsigned long currentTime = millis();
-    if (currentTime - lastReconnectAttempt >= WS_RECONNECT_INTERVAL) {
-        Serial.println("[WS] Attempting to reconnect...");
-        lastReconnectAttempt = currentTime;
-        // WebSocket library handles reconnection automatically
-    }
-}
+
