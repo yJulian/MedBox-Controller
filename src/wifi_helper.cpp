@@ -79,6 +79,7 @@ BLECharacteristic* pCharacteristic = nullptr;
 bool deviceConnected = false;
 bool oldDeviceConnected = false;
 uint32_t valueCounter = 0;
+bool restart = false;
     
 // Server Callback -> Connection Status tracken
 class MyServerCallbacks : public BLEServerCallbacks {
@@ -109,6 +110,10 @@ public:
         std::string rxValue = pCharacteristic->getValue();
         if (rxValue.length() > 0) {
             if (state == 0) {
+                if (rxValue == "GET_MAC") {
+                    String mac = "MAC:" + WiFi.macAddress();
+                    sendChunk(mac.c_str());
+                }
                 if (rxValue == "SCAN_WIFI") {
                     this->scanWifi();
                 }
@@ -128,10 +133,35 @@ public:
                 }
                 if (WifiSSID.length() > 0 && WifiPass.length() > 0) {
                     // Both SSID and Password received
-                    Serial.println("Both SSID and Password received, saving config...");
-                    pWifiHelper->saveConfig(WifiSSID, WifiPass);
-                    Serial.println("Configuration saved. Restarting to connect...");
-                    ESP.restart();
+                    Serial.println("Both SSID and Password received, attempting to connect...");
+                    
+                    WiFi.mode(WIFI_STA);
+                    // Try to connect before restarting
+                    WiFi.begin(WifiSSID.c_str(), WifiPass.c_str());
+
+                    Serial.printf("Trying to connect to %s", WifiSSID.c_str());
+
+                    unsigned long start = millis();
+                    while (WiFi.status() != WL_CONNECTED && millis() - start < 10000) {
+                        delay(300);
+                        Serial.print(".");
+                    }
+                    
+                    if (WiFi.status() == WL_CONNECTED) {
+                        sendChunk("SUCCESS");
+                        Serial.println("Connected to WiFi successfully, saving config...!");
+                        pWifiHelper->saveConfig(WifiSSID, WifiPass);
+                        Serial.println("Configuration saved. Restarting to connect...");
+                        Serial.println("Connected to WiFi successfully restarting");
+
+                        restart = true; // Trigger restart
+                    } else {
+                        WifiSSID = "";
+                        WifiPass = "";
+                        sendChunk("FAILED");
+                        state = 0; // Reset state on failure
+                        Serial.println("Failed to connect to WiFi with provided credentials.");
+                    }
                 }
             }        
         }
@@ -224,5 +254,11 @@ void WifiHelper::loop() {
         oldDeviceConnected = deviceConnected;
     }
 
-    loop();
+    if (restart) {
+        Serial.println("Restarting ESP32...");
+        delay(1000);
+        ESP.restart();
+    }
+
+    delay(500);
 }
