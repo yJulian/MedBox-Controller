@@ -9,8 +9,10 @@ void setup() {
   // Initialize GPIOs
   initializeGPIO();
 
+  WifiHelper wifiHelper;
+
   // Setup WiFi connection
-  connectWifi();
+  wifiHelper.connect();
 }
 
 void loop() {
