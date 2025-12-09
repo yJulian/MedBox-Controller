@@ -4,8 +4,8 @@
 #include <wifi_helper.hpp>
 #include <websocket_helper.hpp>
 
-boolean wifi_loop = false;
-boolean wifi_connected = false;
+bool wifi_loop = false;
+bool wifi_connected = false;
 
 WifiHelper wifiHelper;
 WebSocketHelper wsHelper;

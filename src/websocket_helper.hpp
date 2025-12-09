@@ -1,6 +1,4 @@
-#ifndef WEBSOCKET_HELPER_HPP
-#define WEBSOCKET_HELPER_HPP
-
+#pragma once
 #include <Arduino.h>
 #include <WebSocketsClient.h>
 
@@ -22,5 +20,3 @@ private:
     
     static WebSocketHelper* instance;  // For static callback
 };
-
-#endif // WEBSOCKET_HELPER_HPP

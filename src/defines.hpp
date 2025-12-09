@@ -8,4 +8,3 @@
 #define WS_PATH "/ws"             // WebSocket endpoint path
 #define WS_RECONNECT_INTERVAL 5000  // Reconnection interval in milliseconds
 #define WS_PING_INTERVAL 30000      // Ping interval for keep-alive in milliseconds
-

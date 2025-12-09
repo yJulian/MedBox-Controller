@@ -89,5 +89,3 @@ void WebSocketHelper::onWebSocketEvent(WStype_t type, uint8_t* payload, size_t l
             break;
     }
 }
-
-
