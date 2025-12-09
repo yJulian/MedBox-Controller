@@ -92,46 +92,83 @@ class MyServerCallbacks : public BLEServerCallbacks {
     }
 };
 
-void WifiHelper::scanWifi() {
-  Serial.println("Scanning Wifi networks...");
-  int n = WiFi.scanNetworks();
+struct WifiNetwork {
+    String ssid;
+    int32_t rssi;
+};
 
-  String networks;
-
-  if (n == 0) {
-    networks = "No networks found";
-  } else {
-    for (int i = 0; i < n; i++) {
-      networks += WiFi.SSID(i) + "\n";
-    }
-  }
-
-  pCharacteristic->setValue(networks.c_str());
-  pCharacteristic->notify();  // Notify an Client
-  Serial.println(networks);
-}
 
 // Characteristic Callback -> reagiert auf Writes vom Client
 class MyCallbacks : public BLECharacteristicCallbacks {
+    WifiHelper* pWifiHelper;
+    
+public:
+    MyCallbacks(WifiHelper* wifiHelper) : pWifiHelper(wifiHelper) {}
+    
     void onWrite(BLECharacteristic* pCharacteristic) override {
         std::string rxValue = pCharacteristic->getValue();
         if (rxValue.length() > 0) {
-            Serial.print("[BLE] Received: ");
-            for (size_t i = 0; i < rxValue.length(); i++) {
-                Serial.print(rxValue[i]);
-            }
-            Serial.println();
-            // Beispiel: Echo zurückschreiben
-            pCharacteristic->setValue(rxValue);
-            pCharacteristic->notify();  // sendet Notify an Client
+            if (state == 0) {
+                if (rxValue == "SCAN_WIFI") {
+                    this->scanWifi();
+                }
+                if (rxValue == "CON_WIFI") {
+                    state = 1; // Next state: wait for SSID
+                    Serial.println("Received CON_WIFI, waiting for SSID...");
+                }
+            } else if (state == 1) // Waiting for Wifi SSID
+            {
+                char type = rxValue.front();
+                if (type == 'S') {
+                    WifiSSID = String(rxValue.substr(1).c_str());
+                    Serial.printf("Received SSID: %s\n", WifiSSID.c_str());
+                } else if (type == 'P') {
+                    WifiPass = String(rxValue.substr(1).c_str());
+                    Serial.printf("Received Password: %s\n", WifiPass.c_str());
+                }
+                if (WifiSSID.length() > 0 && WifiPass.length() > 0) {
+                    // Both SSID and Password received
+                    Serial.println("Both SSID and Password received, saving config...");
+                    pWifiHelper->saveConfig(WifiSSID, WifiPass);
+                    Serial.println("Configuration saved. Restarting to connect...");
+                    ESP.restart();
+                }
+            }        
         }
+    }
+private:
+    int state = 0;
+    void sendChunk(const char *value) {
+        pCharacteristic->setValue(value);
+        pCharacteristic->notify();  // Notify an Client
+    }
+    String WifiSSID;
+    String WifiPass;
+
+    void scanWifi() {
+        Serial.println("Scanning Wifi networks...");
+        int n = WiFi.scanNetworks();
+
+        String networks;
+
+        sendChunk("Begin Wifi");
+
+        for (int i = 0; i < n; i++) {
+            char buffer[64];
+            snprintf(buffer, sizeof(buffer), "SSID:%s,RSSI:%d", WiFi.SSID(i).c_str(), WiFi.RSSI(i));
+            sendChunk(buffer);
+        }
+
+        sendChunk("End Wifi");
+
+        Serial.println(networks);
     }
 };
 
 
 void WifiHelper::startGattServer() {
     // 1) BLE initialisieren
-    BLEDevice::init("ESP32-GATT-Server");  // Name, den du in der App siehst
+    BLEDevice::init("MedBox Controller");  // Name, den du in der App siehst
 
     // 2) Server erstellen
     pServer = BLEDevice::createServer();
@@ -153,7 +190,7 @@ void WifiHelper::startGattServer() {
     pCharacteristic->addDescriptor(new BLE2902());
 
     // 6) Callback setzen
-    pCharacteristic->setCallbacks(new MyCallbacks());
+    pCharacteristic->setCallbacks(new MyCallbacks(this));
 
     // Initialer Wert
     pCharacteristic->setValue("Hello from ESP32");
@@ -170,8 +207,6 @@ void WifiHelper::startGattServer() {
 
     BLEDevice::startAdvertising();
     Serial.println("[BLE] Advertising started");
-
-    loop();
 }
 
 void WifiHelper::loop() {

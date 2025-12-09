@@ -2,6 +2,9 @@
 #include <gpio.hpp>
 #include <wifi_helper.hpp>
 
+boolean wifi_loop = false;
+
+WifiHelper wifiHelper;
 
 void setup() {
   // Setup serial communication at 115200 baud rate
@@ -9,12 +12,18 @@ void setup() {
   // Initialize GPIOs
   initializeGPIO();
 
-  WifiHelper wifiHelper;
-
+  
+  
+  
   // Setup WiFi connection
+  wifi_loop = true;
   wifiHelper.connect();
+  wifi_loop = false;
 }
 
 void loop() {
+  if (wifi_loop) {
+    wifiHelper.loop();
+  }
   // put your main code here, to run repeatedly:
 }

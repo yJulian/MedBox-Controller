@@ -12,15 +12,14 @@ public:
     void saveConfig(const String& ssid, const String& pass); // WLAN speichern
     bool hasConfig();                                 // Existiert eine Config?
     void clearConfig();                               // WLAN löschen
-
+    void loop();                                      // Muss in main loop aufgerufen werden
 private:
     Preferences prefs;
     const char* namespaceName = "wifi";
 
     bool loadConfig(String& ssid, String& pass);      // Internes Laden
     void startGattServer();
-    void loop();
-    void scanWifi();
+    
 };
 
 #endif // WIFI_HELPER_HPP
