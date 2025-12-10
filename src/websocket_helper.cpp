@@ -40,7 +40,7 @@ bool WebSocketHelper::isConnected() {
 
 void WebSocketHelper::sendMessage(const String& message) {
     if (connected) {
-        webSocket.sendTXT(message);
+        webSocket.sendTXT((uint8_t *)message.c_str(), message.length());
         Serial.printf("[WS] Sent message: %s\n", message.c_str());
     } else {
         Serial.println("[WS] Cannot send message - not connected");
