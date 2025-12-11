@@ -18,8 +18,7 @@ private:
     const char* namespaceName = "wifi";
 
     bool loadConfig(String& ssid, String& pass);      // Internes Laden
-    void startGattServer();
-    
+    void startGattServer();    
 };
 
 #endif // WIFI_HELPER_HPP

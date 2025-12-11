@@ -16,7 +16,6 @@ private:
     bool connected;
     
     void onWebSocketEvent(WStype_t type, uint8_t* payload, size_t length);
-    static void webSocketEvent(WStype_t type, uint8_t* payload, size_t length);
     
     static WebSocketHelper* instance;  // For static callback
 };

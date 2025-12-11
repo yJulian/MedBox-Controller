@@ -51,11 +51,13 @@ void WebSocketHelper::onWebSocketEvent(WStype_t type, uint8_t* payload, size_t l
     switch(type) {
         case WStype_DISCONNECTED:
             Serial.println("[WS] Disconnected!");
+            ledState = 0xFF00;
             connected = false;
             break;
             
         case WStype_CONNECTED:
             Serial.printf("[WS] Connected to url: %s\n", payload);
+            ledState = 0x0000;
             connected = true;
             
             // Send initial message to server

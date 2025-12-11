@@ -44,10 +44,13 @@ bool WifiHelper::connect() {
     }
 
     if (!loadConfig(ssid, pass)) {
+        ledState = 0xCCCC;
         startGattServer();
         return false;
     }
 
+    ledState = 0xFF00;
+    
     WiFi.mode(WIFI_STA);
     WiFi.begin(ssid.c_str(), pass.c_str());
 
@@ -63,6 +66,7 @@ bool WifiHelper::connect() {
         Serial.print("Wifi Connected: ");
         Serial.println(WiFi.localIP());
         WiFi.setAutoReconnect(true);
+        ledState = 0x0303;
         return true;
     }
 
@@ -258,5 +262,4 @@ void WifiHelper::loop() {
             ESP.restart();
         }
     }
-    delay(500);
 }
