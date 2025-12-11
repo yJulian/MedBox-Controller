@@ -7,6 +7,7 @@
 void initializeGPIO() {
     // Initialize GPIO pins here
     pinMode(RESET_PIN, INPUT_PULLUP);
+    pinMode(LED_PIN, OUTPUT);
 
     // Short delay to stabilize the pin state
     delay(100); 

@@ -4,11 +4,12 @@
 #include <wifi_helper.hpp>
 #include <websocket_helper.hpp>
 
-bool wifi_loop = false;
 bool wifi_connected = false;
 
 WifiHelper wifiHelper;
 WebSocketHelper wsHelper;
+
+bool p2LedState = false;
 
 void setup() {
   // Setup serial communication at 115200 baud rate
@@ -18,7 +19,6 @@ void setup() {
   
   // Setup WiFi connection
   wifi_connected = wifiHelper.connect();
-  wifi_loop = !wifi_connected;
   
   // Initialize WebSocket if WiFi is connected
   if (wifi_connected) {
@@ -28,8 +28,10 @@ void setup() {
 }
 
 void loop() {
-  if (wifi_loop) {
+  if (!wifi_connected) {
     wifiHelper.loop();
+
+    digitalWrite(LED_PIN, (p2LedState = !p2LedState));
   } else {
     // WiFi is connected, run WebSocket loop
     wsHelper.loop();
@@ -41,5 +43,4 @@ void loop() {
       ESP.restart();
     }
   }
-  // put your main code here, to run repeatedly:
 }

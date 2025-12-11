@@ -4,9 +4,10 @@
 #include <BLE2902.h>
 #include <defines.hpp>
 
-WifiHelper::WifiHelper() {
-    // leer für jetzt
-}
+#define SERVICE_UUID        "12345678-1234-1234-1234-1234567890ab"
+#define CHARACTERISTIC_UUID "abcdefab-1234-5678-9abc-def012345678"
+
+WifiHelper::WifiHelper() {}
 
 void WifiHelper::saveConfig(const String& ssid, const String& pass) {
     prefs.begin(namespaceName, false);
@@ -39,9 +40,7 @@ bool WifiHelper::connect() {
 
     if (digitalRead(RESET_PIN) == LOW) {
         Serial.println("Reset pin is LOW, resetting WiFi settings...");
-        prefs.begin(namespaceName, false);
-        prefs.clear();   // löscht alle Keys im Namespace "wifi"
-        prefs.end();
+        this->clearConfig();
     }
 
     if (!loadConfig(ssid, pass)) {
@@ -71,15 +70,13 @@ bool WifiHelper::connect() {
     return false;
 }
 
-// Eigene UUIDs (kannst du mit irgendeinem UUID-Generator ersetzen)
-#define SERVICE_UUID        "12345678-1234-1234-1234-1234567890ab"
-#define CHARACTERISTIC_UUID "abcdefab-1234-5678-9abc-def012345678"
 BLEServer* pServer = nullptr;
 BLECharacteristic* pCharacteristic = nullptr;
 bool deviceConnected = false;
 bool oldDeviceConnected = false;
 uint32_t valueCounter = 0;
 bool restart = false;
+bool gattServerStarted = false;
     
 // Server Callback -> Connection Status tracken
 class MyServerCallbacks : public BLEServerCallbacks {
@@ -168,12 +165,13 @@ public:
     }
 private:
     int state = 0;
-    void sendChunk(const char *value) {
-        pCharacteristic->setValue(value);
-        pCharacteristic->notify();  // Notify an Client
-    }
     String WifiSSID;
     String WifiPass;
+
+    void sendChunk(const char *value) {
+        pCharacteristic->setValue(value);
+        pCharacteristic->notify(); 
+    }
 
     void scanWifi() {
         Serial.println("Scanning Wifi networks...");
@@ -190,24 +188,25 @@ private:
         }
 
         sendChunk("End Wifi");
-
-        Serial.println(networks);
+        Serial.printf("Found %d networks\n", n);
     }
 };
 
 
 void WifiHelper::startGattServer() {
-    // 1) BLE initialisieren
-    BLEDevice::init("MedBox Controller");  // Name, den du in der App siehst
+    gattServerStarted = true;
+    Serial.println("[BLE] Starting GATT server...");
+    // 1) Initialize BLE Module
+    BLEDevice::init("MedBox Controller");
 
-    // 2) Server erstellen
+    // 2) Create GATT Server
     pServer = BLEDevice::createServer();
     pServer->setCallbacks(new MyServerCallbacks());
 
-    // 3) Service erstellen
+    // 3) Create Service
     BLEService* pService = pServer->createService(SERVICE_UUID);
 
-    // 4) Characteristic erstellen
+    // 4) Create Characteristic
     pCharacteristic = pService->createCharacteristic(
         CHARACTERISTIC_UUID,
         BLECharacteristic::PROPERTY_READ   |
@@ -216,19 +215,19 @@ void WifiHelper::startGattServer() {
         BLECharacteristic::PROPERTY_INDICATE
     );
 
-    // 5) Descriptor hinzufügen (wichtig für Notify in vielen Apps)
+    // 5) Add Descriptor (important for Notify in many apps)
     pCharacteristic->addDescriptor(new BLE2902());
 
-    // 6) Callback setzen
+    // 6) Set Callback
     pCharacteristic->setCallbacks(new MyCallbacks(this));
 
-    // Initialer Wert
+    // Initial value
     pCharacteristic->setValue("Hello from ESP32");
 
-    // 7) Service starten
+    // 7) Start Service
     pService->start();
 
-    // 8) Advertising starten
+    // 8) Start Advertising
     BLEAdvertising* pAdvertising = BLEDevice::getAdvertising();
     pAdvertising->addServiceUUID(SERVICE_UUID);
     pAdvertising->setScanResponse(true);
@@ -240,25 +239,24 @@ void WifiHelper::startGattServer() {
 }
 
 void WifiHelper::loop() {
-    // Connection-Status Änderungen handeln (neu werben nach Disconnect)
-    if (!deviceConnected && oldDeviceConnected) {
-        // kurz warten, sonst meckern manche Geräte
-        delay(500);
-        pServer->startAdvertising();
-        Serial.println("[BLE] Start advertising again");
-        oldDeviceConnected = deviceConnected;
-    }
+    if (gattServerStarted) {
+        // Handle connection status changes (re-advertise after disconnect)
+        if (!deviceConnected && oldDeviceConnected) {
+            pServer->startAdvertising();
+            Serial.println("[BLE] Start advertising again");
+            oldDeviceConnected = deviceConnected;
+        }
 
-    if (deviceConnected && !oldDeviceConnected) {
-        // frisch verbunden
-        oldDeviceConnected = deviceConnected;
-    }
+        if (deviceConnected && !oldDeviceConnected) {
+            // freshly connected
+            oldDeviceConnected = deviceConnected;
+        }
 
-    if (restart) {
-        Serial.println("Restarting ESP32...");
-        delay(1000);
-        ESP.restart();
+        if (restart) {
+            Serial.println("Restarting ESP32...");
+            delay(1000);
+            ESP.restart();
+        }
     }
-
     delay(500);
 }
