@@ -7,6 +7,10 @@
 #define SERVICE_UUID        "12345678-1234-1234-1234-1234567890ab"
 #define CHARACTERISTIC_UUID "abcdefab-1234-5678-9abc-def012345678"
 
+#define GATT_SERVER_STARTED_CODE 0xCCCC
+#define GATT_SERVER_CONNECTED_CODE 0xAAAA
+#define GATT_WIFI_CONNECTION_TRY 0xFF00
+
 WifiHelper::WifiHelper() {}
 
 void WifiHelper::saveConfig(const String& ssid, const String& pass) {
@@ -44,7 +48,6 @@ bool WifiHelper::connect() {
     }
 
     if (!loadConfig(ssid, pass)) {
-        ledState = 0xCCCC;
         startGattServer();
         return false;
     }
@@ -86,10 +89,12 @@ bool gattServerStarted = false;
 class MyServerCallbacks : public BLEServerCallbacks {
     void onConnect(BLEServer* pServer) override {
         deviceConnected = true;
+        ledState = GATT_SERVER_CONNECTED_CODE;
         Serial.println("[BLE] Client connected");
     }
     void onDisconnect(BLEServer* pServer) override {
         deviceConnected = false;
+        ledState = GATT_SERVER_STARTED_CODE;
         Serial.println("[BLE] Client disconnected");
     }
 };
@@ -135,6 +140,7 @@ public:
                 if (WifiSSID.length() > 0 && WifiPass.length() > 0) {
                     // Both SSID and Password received
                     Serial.println("Both SSID and Password received, attempting to connect...");
+                    ledState = GATT_WIFI_CONNECTION_TRY;
                     
                     WiFi.mode(WIFI_STA);
                     // Try to connect before restarting
@@ -198,6 +204,7 @@ private:
 
 
 void WifiHelper::startGattServer() {
+    ledState = GATT_SERVER_STARTED_CODE;
     gattServerStarted = true;
     Serial.println("[BLE] Starting GATT server...");
     // 1) Initialize BLE Module
@@ -247,6 +254,7 @@ void WifiHelper::loop() {
         // Handle connection status changes (re-advertise after disconnect)
         if (!deviceConnected && oldDeviceConnected) {
             pServer->startAdvertising();
+            ledState = GATT_SERVER_STARTED_CODE;
             Serial.println("[BLE] Start advertising again");
             oldDeviceConnected = deviceConnected;
         }
