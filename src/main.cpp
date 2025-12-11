@@ -1,10 +1,15 @@
 #include <Arduino.h>
+#include <WiFi.h>
 #include <gpio.hpp>
 #include <wifi_helper.hpp>
+#include <websocket_helper.hpp>
 
-boolean wifi_loop = false;
+bool wifi_connected = false;
 
 WifiHelper wifiHelper;
+WebSocketHelper wsHelper;
+
+bool p2LedState = false;
 
 void setup() {
   // Setup serial communication at 115200 baud rate
@@ -13,12 +18,29 @@ void setup() {
   initializeGPIO();
   
   // Setup WiFi connection
-  wifi_loop = !wifiHelper.connect();
+  wifi_connected = wifiHelper.connect();
+  
+  // Initialize WebSocket if WiFi is connected
+  if (wifi_connected) {
+    Serial.println("WiFi connected, initializing WebSocket...");
+    wsHelper.begin();
+  }
 }
 
 void loop() {
-  if (wifi_loop) {
+  if (!wifi_connected) {
     wifiHelper.loop();
+
+    digitalWrite(LED_PIN, (p2LedState = !p2LedState));
+  } else {
+    // WiFi is connected, run WebSocket loop
+    wsHelper.loop();
+    
+    // Check if WiFi is still connected
+    if (WiFi.status() != WL_CONNECTED) {
+      Serial.println("WiFi disconnected! Restarting...");
+      delay(1000);
+      ESP.restart();
+    }
   }
-  // put your main code here, to run repeatedly:
 }
