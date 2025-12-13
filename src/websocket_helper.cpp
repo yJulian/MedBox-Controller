@@ -66,7 +66,15 @@ void WebSocketHelper::onWebSocketEvent(WStype_t type, uint8_t* payload, size_t l
             
         case WStype_TEXT:
             Serial.printf("[WS] Received text: %s\n", payload);
-            // Handle incoming messages here
+            {
+                JsonDocument doc;
+                DeserializationError err = deserializeJson(doc, payload, length);
+                if (err) {
+                    Serial.printf("[WS] JSON parse error: %s (len=%u)\n", err.c_str(), (unsigned)length);
+                } else {
+                    handleJsonMessage(doc);
+                }
+            }
             break;
             
         case WStype_BIN:
@@ -90,4 +98,17 @@ void WebSocketHelper::onWebSocketEvent(WStype_t type, uint8_t* payload, size_t l
         default:
             break;
     }
+}
+
+void WebSocketHelper::handleJsonMessage(const JsonDocument& doc) {
+    // Example: read common fields safely and log them.
+    // Adjust keys as your backend schema evolves.
+    const char* type = doc["type"] | "unknown";
+    const char* command = doc["command"] | "none";
+    int value = doc["value"] | 0;
+
+    Serial.printf("[WS] JSON message -> type: %s, command: %s, value: %d\n", type, command, value);
+
+    // Implement routing based on parsed content without throwing exceptions.
+    // For now, only logging; extend with actual control logic as needed.
 }

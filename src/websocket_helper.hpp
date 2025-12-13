@@ -1,6 +1,7 @@
 #pragma once
 #include <Arduino.h>
 #include <WebSocketsClient.h>
+#include <ArduinoJson.h>
 
 class WebSocketHelper {
 public:
@@ -16,6 +17,7 @@ private:
     bool connected;
     
     void onWebSocketEvent(WStype_t type, uint8_t* payload, size_t length);
+    void handleJsonMessage(const JsonDocument& doc);
     
     static WebSocketHelper* instance;  // For static callback
 };
