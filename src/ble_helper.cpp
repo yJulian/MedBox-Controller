@@ -184,6 +184,7 @@ void BleHelper::startServer(WifiHelper* wifiHelper) {
     BLEDevice::init("MedBox Controller");
 
     // Create GATT Server with connection callbacks
+    // Note: BLE library takes ownership of callback object
     pServer = BLEDevice::createServer();
     pServer->setCallbacks(new MyServerCallbacks());
 
@@ -200,9 +201,11 @@ void BleHelper::startServer(WifiHelper* wifiHelper) {
     );
 
     // Add descriptor required for notifications in most BLE apps
+    // Note: BLE library takes ownership of descriptor
     pCharacteristic->addDescriptor(new BLE2902());
 
     // Set callback for handling writes from client
+    // Note: BLE library takes ownership of callback object
     pCharacteristic->setCallbacks(new MyCallbacks(wifiHelper));
 
     // Set initial value
