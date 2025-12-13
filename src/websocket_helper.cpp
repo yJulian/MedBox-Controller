@@ -29,7 +29,7 @@ void WebSocketHelper::begin() {
     // Configure automatic reconnection on disconnect
     webSocket.setReconnectInterval(WS_RECONNECT_INTERVAL);
     
-    Serial.printf("[WS] Configured to connect to ws://%s:%d/%s\n", WS_HOST, WS_PORT, WS_PATH);
+    Serial.printf("[WS] Configured to connect to ws://%s:%d%s\n", WS_HOST, WS_PORT, WS_PATH);
 }
 
 void WebSocketHelper::loop() {

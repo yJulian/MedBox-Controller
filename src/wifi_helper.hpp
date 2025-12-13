@@ -17,6 +17,7 @@ class BleHelper;
 class WifiHelper {
 public:
     WifiHelper();
+    ~WifiHelper();
 
     /**
      * @brief Attempt WiFi connection using stored credentials

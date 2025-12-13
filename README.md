@@ -92,9 +92,44 @@ On first boot or when GPIO 15 (RESET_PIN) is held LOW during startup:
 ## 📝 Project Structure
 ```
 src/
-├── main.cpp              # Main program entry point
-├── defines.hpp           # Configuration parameters (WiFi, WebSocket, GPIO pins)
-├── gpio.hpp/cpp         # GPIO initialization
-├── wifi_helper.hpp/cpp  # WiFi connection and BLE configuration
-└── websocket_helper.hpp/cpp  # WebSocket client with keep-alive
+├── main.cpp                    # Main program entry point with FreeRTOS LED task
+├── defines.hpp                 # Configuration parameters (WiFi, WebSocket, GPIO pins, LED codes)
+├── gpio.hpp/cpp                # GPIO initialization (Reset pin, LED pin)
+├── wifi_helper.hpp/cpp         # WiFi connection manager with NVS storage
+├── ble_helper.hpp/cpp          # BLE GATT server for WiFi configuration
+└── websocket_helper.hpp/cpp    # WebSocket client with automatic reconnection and heartbeat
 ```
+
+### Module Overview
+
+**main.cpp**
+- Minimal setup and loop orchestration
+- FreeRTOS task for non-blocking LED status display
+- Coordinates WiFi, BLE, and WebSocket initialization
+
+**defines.hpp**
+- Central configuration for all pins and constants
+- WebSocket endpoint configuration
+- LED state pattern documentation
+
+**gpio.hpp/.cpp**
+- GPIO pin initialization with proper header structure
+- Configures reset button and status LED
+
+**wifi_helper.hpp/.cpp**
+- WiFi credential management using ESP32 Preferences (NVS)
+- Automatic connection with timeout
+- Reset button support for credential clearing
+- Delegates to BLE helper when credentials are missing
+
+**ble_helper.hpp/.cpp**
+- BLE GATT server for mobile app configuration
+- State machine for WiFi credential collection
+- Commands: GET_MAC, SCAN_WIFI, CON_WIFI
+- Automatic ESP restart after successful configuration
+
+**websocket_helper.hpp/.cpp**
+- WebSocket client with keep-alive heartbeat
+- Automatic reconnection on disconnect
+- JSON message parsing with error handling
+- Event-driven architecture for connection state

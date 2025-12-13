@@ -11,6 +11,11 @@ WifiHelper::WifiHelper() {
     bleHelper = new BleHelper();
 }
 
+WifiHelper::~WifiHelper() {
+    // Clean up BLE helper to prevent memory leak
+    delete bleHelper;
+}
+
 void WifiHelper::saveConfig(const String& ssid, const String& pass) {
     prefs.begin(namespaceName, false);
     prefs.putString("ssid", ssid);

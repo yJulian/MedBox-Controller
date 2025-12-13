@@ -49,9 +49,12 @@
 #define WS_PORT 8080
 
 /**
- * @brief WebSocket endpoint path (without leading slash)
+ * @brief WebSocket endpoint path
+ * 
+ * Must include leading slash if needed by server.
+ * Examples: "/ws", "/api/socket", "ws" (no slash)
  */
-#define WS_PATH "ws"
+#define WS_PATH "/ws"
 
 /**
  * @brief Auto-reconnection interval in milliseconds
