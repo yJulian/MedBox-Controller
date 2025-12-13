@@ -1,16 +1,14 @@
-#ifndef GPIO_HPP
-#define GPIO_HPP
-
-#include <gpio.hpp>
+#include "gpio.hpp"
 #include <Arduino.h>
 
 void initializeGPIO() {
-    // Initialize GPIO pins here
+    // Configure reset pin with pull-up resistor
+    // Reading LOW during boot triggers WiFi credential reset
     pinMode(RESET_PIN, INPUT_PULLUP);
+    
+    // Configure LED pin for output to display status patterns
     pinMode(LED_PIN, OUTPUT);
 
-    // Short delay to stabilize the pin state
+    // Short delay to stabilize pin states after configuration
     delay(100); 
 }
-
-#endif // GPIO_HPP
