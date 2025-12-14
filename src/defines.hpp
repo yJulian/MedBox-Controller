@@ -78,11 +78,8 @@
 
 /**
  * @brief WebSocket endpoint path
- * 
- * Must include leading slash if needed by server.
- * Examples: "ws", "api/socket", "ws" (no slash)
  */
-#define WS_PATH "device/test"
+#define WS_PATH "/device/"
 
 /**
  * @brief Auto-reconnection interval in milliseconds
