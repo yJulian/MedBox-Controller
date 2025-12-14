@@ -42,9 +42,8 @@
  * 
  * First peripheral has no input (RX) pin connected.
  */
-#define SERIAL_IN_PIN 3
-#define SERIAL_OUT_PIN 1
-
+#define SERIAL_IN_PIN 19
+#define SERIAL_OUT_PIN 13
 /**
  * @brief Parallel communication pin
  * 
@@ -52,7 +51,7 @@
  * Output from one peripheral is routed to the input of all other peripherals.
  * Used as wired-and for broadcasting data.
  */
-#define PARALLEL_PIN 4
+#define PARALLEL_PIN 21
 
 /**
  * @brief UART pins for communication between master and slave devices

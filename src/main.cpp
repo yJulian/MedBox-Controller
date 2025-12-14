@@ -29,6 +29,8 @@ CommunicationHelper commHelper;
  */
 uint16_t ledState = 0xC0C0;
 
+bool master = false;
+
 /**
  * @brief FreeRTOS task for LED status display
  * 
@@ -57,33 +59,49 @@ void setup() {
   // Initialize serial communication for debugging
   Serial.begin(115200);
   Serial.println("\n[Setup] MedBox Controller starting...");
-  
+
   // Configure GPIO pins (LED and Reset button)
   initializeGPIO();
-  
-  // Initialize communication helper (UART, Serial, Parallel pins)
-  commHelper.begin();
-  
-  // Attempt WiFi connection (or start BLE config if needed)
-  wifi_connected = wifiHelper.connect();
-  
+
   // Create LED task on Core 1 for non-blocking status display
   xTaskCreatePinnedToCore(
-        ledTask,          // Task function
-        "ledTask",        // Task name (for debugging)
-        4096,             // Stack size in bytes
-        NULL,             // Task parameter (unused)
-        1,                // Priority (1 = low)
-        NULL,             // Task handle (not needed)
-        1                 // Core ID (0 or 1, using 1)
-    );
+    ledTask,          // Task function
+    "ledTask",        // Task name (for debugging)
+    4096,             // Stack size in bytes
+    NULL,             // Task parameter (unused)
+    1,                // Priority (1 = low)
+    NULL,             // Task handle (not needed)
+    1                 // Core ID (0 or 1, using 1)
+  );
+  
+  master = isMaster();
 
-  // Initialize WebSocket if WiFi connection succeeded
-  if (wifi_connected) {
-    Serial.println("[Setup] WiFi connected, initializing WebSocket...");
-    wsHelper.begin();
+  // Initialize communication helper (UART, Serial, Parallel pins)
+  commHelper.begin(master);
+  
+  // Attempt WiFi connection (or start BLE config if needed)
+  wifi_connected = true;
+
+  // Only master device manages WiFi and WebSocket
+  if (master) {
+    wifi_connected = wifiHelper.connect();
+
+    // Initialize WebSocket if WiFi connection succeeded
+    if (wifi_connected) {
+      Serial.println("[Setup] WiFi connected, initializing WebSocket...");
+      wsHelper.begin();
+    } else {
+      Serial.println("[Setup] WiFi not connected, BLE configuration active");
+    }
   } else {
-    Serial.println("[Setup] WiFi not connected, BLE configuration active");
+    Serial.println("[Setup] Configured as SLAVE device, skipping WiFi/WebSocket setup");
+
+    commHelper.setUartCallback([](const String& data) {
+      Serial.print("[UART Callback] Received data: ");
+      Serial.println(data);
+    });
+
+    ledState = 0x0000; // Indicate slave mode with LED pattern
   }
   
   Serial.println("[Setup] Initialization complete");
@@ -97,14 +115,19 @@ void loop() {
     // WiFi not connected - run BLE configuration loop
     wifiHelper.loop();
   } else {
-    // WiFi connected - maintain WebSocket connection
-    wsHelper.loop();
-    
-    // Monitor WiFi connection status
-    if (WiFi.status() != WL_CONNECTED) {
-      Serial.println("[Loop] WiFi connection lost! Restarting...");
-      delay(1000);
-      ESP.restart();
+    if (master) {
+      // WiFi connected - maintain WebSocket connection
+      wsHelper.loop();
+
+      // send periodic heartbeat or status if needed
+      commHelper.sendUart("Heartbeat from MASTER\n");
+      
+      // Monitor WiFi connection status
+      if (WiFi.status() != WL_CONNECTED) {
+        Serial.println("[Loop] WiFi connection lost! Restarting...");
+        delay(1000);
+        ESP.restart();
+      }
     }
   }
   

@@ -40,7 +40,7 @@ public:
      * - SERIAL_OUT_PIN as OUTPUT (initially HIGH)
      * - PARALLEL_PIN as INPUT (high-impedance for wired-AND)
      */
-    void begin();
+    void begin(bool isMaster);
     
     /**
      * @brief Process incoming UART data (must be called in main loop)
@@ -76,7 +76,7 @@ public:
      * Pulls SERIAL_OUT_PIN LOW for a brief moment (1ms),
      * then returns it to HIGH state.
      */
-    void pulseSerialOut();
+    void pulseSerialOut(uint32_t delayUs = 1000);
     
     /**
      * @brief Set callback for SERIAL_IN_PIN interrupt

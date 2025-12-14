@@ -13,41 +13,26 @@ CommunicationHelper::CommunicationHelper()
       serialInputState(LOW) {
 }
 
-void CommunicationHelper::begin() {
+void CommunicationHelper::begin(bool isMaster) {
     // Set static instance for ISR access (only one instance should exist)
     if (instance == nullptr) {
         instance = this;
     } else {
         Serial.println("[CommHelper] Warning: Multiple CommunicationHelper instances detected!");
     }
+
+    if (isMaster) {
+        Serial.println("[CommHelper] Configured as MASTER");
+        uart.begin(115200, SERIAL_8N1, RX_PIN, TX_PIN);
+    } else {
+        Serial.println("[CommHelper] Configured as SLAVE");
+        uart.begin(115200, SERIAL_8N1, TX_PIN, RX_PIN);
+    }
+    Serial.println("[CommHelper] UART initialized on Serial2");
     
-    // ========================================================================
-    // Initialize UART on Serial2 (TX_PIN 17, RX_PIN 16)
-    // ========================================================================
-    uart.begin(115200, SERIAL_8N1, RX_PIN, TX_PIN);
-    Serial.println("[CommHelper] UART initialized on Serial2 (TX:17, RX:16)");
-    
-    // ========================================================================
-    // Initialize Serial pins for chain communication
-    // ========================================================================
-    // SERIAL_IN_PIN: Configure as input and attach interrupt
-    pinMode(SERIAL_IN_PIN, INPUT);
     attachInterrupt(digitalPinToInterrupt(SERIAL_IN_PIN), serialInputISR, CHANGE);
     Serial.println("[CommHelper] SERIAL_IN_PIN configured with interrupt");
-    
-    // SERIAL_OUT_PIN: Configure as output, initially HIGH
-    pinMode(SERIAL_OUT_PIN, OUTPUT);
-    digitalWrite(SERIAL_OUT_PIN, HIGH);
-    Serial.println("[CommHelper] SERIAL_OUT_PIN configured as output (HIGH)");
-    
-    // ========================================================================
-    // Initialize Parallel pin for wired-AND communication
-    // ========================================================================
-    // PARALLEL_PIN: Configure as INPUT (high-impedance Z-state)
-    // This allows wired-AND operation where any device can pull LOW
-    pinMode(PARALLEL_PIN, INPUT);
-    Serial.println("[CommHelper] PARALLEL_PIN configured as input (Z-state for wired-AND)");
-    
+
     Serial.println("[CommHelper] All communication interfaces initialized");
 }
 
@@ -83,8 +68,6 @@ void CommunicationHelper::loop() {
 
 void CommunicationHelper::sendUart(const String& message) {
     uart.println(message);
-    Serial.print("[CommHelper] UART sent: ");
-    Serial.println(message);
 }
 
 void CommunicationHelper::setUartCallback(UartCallback callback) {
@@ -96,10 +79,10 @@ void CommunicationHelper::setUartCallback(UartCallback callback) {
 // Serial Pin Communication Methods
 // ============================================================================
 
-void CommunicationHelper::pulseSerialOut() {
+void CommunicationHelper::pulseSerialOut(uint32_t delayUs = 1000) {
     // Pull SERIAL_OUT_PIN LOW for 1ms pulse
     digitalWrite(SERIAL_OUT_PIN, LOW);
-    delayMicroseconds(1000); // 1ms pulse
+    delayMicroseconds(delayUs); // 1ms pulse
     digitalWrite(SERIAL_OUT_PIN, HIGH);
     
     Serial.println("[CommHelper] SERIAL_OUT_PIN pulse sent");
