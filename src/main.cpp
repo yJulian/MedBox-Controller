@@ -11,6 +11,7 @@
 #include <gpio.hpp>
 #include <wifi_helper.hpp>
 #include <websocket_helper.hpp>
+#include <communication_helper.hpp>
 
 // Global state
 bool wifi_connected = false;
@@ -18,6 +19,7 @@ bool wifi_connected = false;
 // Helper instances
 WifiHelper wifiHelper;
 WebSocketHelper wsHelper;
+CommunicationHelper commHelper;
 
 /**
  * @brief Global LED state pattern (16-bit rotating pattern)
@@ -59,6 +61,9 @@ void setup() {
   // Configure GPIO pins (LED and Reset button)
   initializeGPIO();
   
+  // Initialize communication helper (UART, Serial, Parallel pins)
+  commHelper.begin();
+  
   // Attempt WiFi connection (or start BLE config if needed)
   wifi_connected = wifiHelper.connect();
   
@@ -85,6 +90,9 @@ void setup() {
 }
 
 void loop() {
+  // Process communication helper (UART data reception)
+  commHelper.loop();
+  
   if (!wifi_connected) {
     // WiFi not connected - run BLE configuration loop
     wifiHelper.loop();
