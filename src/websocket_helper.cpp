@@ -12,9 +12,10 @@ WebSocketHelper::WebSocketHelper() {
 void WebSocketHelper::begin() {
     Serial.println("[WS] Initializing WebSocket connection...");
     
-    // Configure WebSocket connection endpoint
+    // Configure WebSocket connection endpoint (TLS - wss)
     webSocket.begin(WS_HOST, WS_PORT, WS_PATH);
-    
+
+
     // Register event handler using lambda to bridge C-style callback
     webSocket.onEvent([](WStype_t type, uint8_t* payload, size_t length) {
         if (instance) {
@@ -29,7 +30,7 @@ void WebSocketHelper::begin() {
     // Configure automatic reconnection on disconnect
     webSocket.setReconnectInterval(WS_RECONNECT_INTERVAL);
     
-    Serial.printf("[WS] Configured to connect to ws://%s:%d%s\n", WS_HOST, WS_PORT, WS_PATH);
+    Serial.printf("[WS] Configured to connect to ws://%s:%d/%s\n", WS_HOST, WS_PORT, WS_PATH);
 }
 
 void WebSocketHelper::loop() {

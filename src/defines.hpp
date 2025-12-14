@@ -69,20 +69,20 @@
 /**
  * @brief WebSocket server hostname or IP address
  */
-#define WS_HOST "192.168.0.132"
+#define WS_HOST "23.88.97.42"
 
 /**
  * @brief WebSocket server port
  */
-#define WS_PORT 8080
+#define WS_PORT 8081
 
 /**
  * @brief WebSocket endpoint path
  * 
  * Must include leading slash if needed by server.
- * Examples: "/ws", "/api/socket", "ws" (no slash)
+ * Examples: "ws", "api/socket", "ws" (no slash)
  */
-#define WS_PATH "/ws"
+#define WS_PATH "device/test"
 
 /**
  * @brief Auto-reconnection interval in milliseconds

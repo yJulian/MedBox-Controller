@@ -2,6 +2,7 @@
 #define WEBSOCKET_HELPER_HPP
 
 #include <Arduino.h>
+#include <WiFiClientSecure.h>
 #include <WebSocketsClient.h>
 #include <ArduinoJson.h>
 
