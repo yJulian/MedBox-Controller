@@ -107,6 +107,10 @@ private:
     
     String uartBuffer;
     
+    // ISR flag and state for deferred processing
+    volatile bool serialInputChanged;
+    volatile int serialInputState;
+    
     /**
      * @brief Static instance pointer for ISR callbacks
      * 
@@ -116,6 +120,8 @@ private:
     
     /**
      * @brief Static ISR handler for SERIAL_IN_PIN interrupt
+     * 
+     * Sets flag and reads pin state for processing in main loop.
      */
     static void IRAM_ATTR serialInputISR();
 };

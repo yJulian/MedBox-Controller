@@ -8,12 +8,19 @@ CommunicationHelper::CommunicationHelper()
     : uart(2), // Use Serial2 (UART2) for inter-MedBox communication
       uartCallback(nullptr),
       serialInputCallback(nullptr),
-      uartBuffer("") {
-    // Set static instance for ISR access
-    instance = this;
+      uartBuffer(""),
+      serialInputChanged(false),
+      serialInputState(LOW) {
 }
 
 void CommunicationHelper::begin() {
+    // Set static instance for ISR access (only one instance should exist)
+    if (instance == nullptr) {
+        instance = this;
+    } else {
+        Serial.println("[CommHelper] Warning: Multiple CommunicationHelper instances detected!");
+    }
+    
     // ========================================================================
     // Initialize UART on Serial2 (TX_PIN 17, RX_PIN 16)
     // ========================================================================
@@ -45,6 +52,14 @@ void CommunicationHelper::begin() {
 }
 
 void CommunicationHelper::loop() {
+    // Process serial input interrupt flag (deferred from ISR)
+    if (serialInputChanged) {
+        serialInputChanged = false;
+        if (serialInputCallback != nullptr) {
+            serialInputCallback(serialInputState);
+        }
+    }
+    
     // Check for available UART data
     while (uart.available()) {
         char c = uart.read();
@@ -119,11 +134,10 @@ void CommunicationHelper::pulseParallelPin() {
 // ============================================================================
 
 void IRAM_ATTR CommunicationHelper::serialInputISR() {
-    if (instance != nullptr && instance->serialInputCallback != nullptr) {
-        // Read current state of SERIAL_IN_PIN
-        int state = digitalRead(SERIAL_IN_PIN);
-        
-        // Trigger callback with current state
-        instance->serialInputCallback(state);
+    if (instance != nullptr) {
+        // Read pin state and set flag for deferred processing in loop()
+        // This keeps ISR fast and avoids callback execution in interrupt context
+        instance->serialInputState = digitalRead(SERIAL_IN_PIN);
+        instance->serialInputChanged = true;
     }
 }
