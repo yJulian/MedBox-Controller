@@ -31,7 +31,7 @@ public:
     using SerialInputCallback = std::function<void(int state)>;
 
     struct SlaveInfo {
-        uint16_t idx;
+        uint8_t idx;
         String mac;
     };
 
@@ -120,6 +120,7 @@ private:
         NORMAL,
         ENUMERATION
     } state;
+
     bool isMaster;    
     String uartBuffer;
     
@@ -127,7 +128,8 @@ private:
     volatile bool serialInputChanged;
     volatile int serialInputState;
 
-    using enumerationUartHandler = std::function<void(const String& data)>;
+    using EnumerationUartHandler = std::function<void(const String& data)>;
+    EnumerationUartHandler enumerationUartHandler;
     void enumerationUartMasterHandler(const String& data);
     void enumerationUartSlaveHandler(const String& data);
 
@@ -145,7 +147,7 @@ private:
      */
     static void IRAM_ATTR serialInputISR();
 
-    uint16_t currentSlaveIdx = 0;
+    uint8_t currentSlaveIdx = 0;
 
     unsigned long lastEnumerationTime = 0;
 
