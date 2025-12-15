@@ -119,8 +119,13 @@ void loop() {
       // WiFi connected - maintain WebSocket connection
       wsHelper.loop();
 
+      if (wsHelper.shouldEnumerate()) {
+        Serial.println("[Loop] WebSocket connected, starting enumeration");
+        commHelper.beginUartEnumeration();
+      }
+
       // send periodic heartbeat or status if needed
-      commHelper.sendUart("Heartbeat from MASTER\n");
+      //commHelper.sendUart("Heartbeat from MASTER\n");
       
       // Monitor WiFi connection status
       if (WiFi.status() != WL_CONNECTED) {

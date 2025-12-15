@@ -45,6 +45,14 @@ bool WebSocketHelper::isConnected() {
     return connected;
 }
 
+bool WebSocketHelper::shouldEnumerate() {
+    if (shouldEnumerateFlag) {
+        shouldEnumerateFlag = false;
+        return true;
+    }
+    return false;
+}
+
 void WebSocketHelper::sendMessage(const String& message) {
     if (connected) {
         webSocket.sendTXT((uint8_t *)message.c_str(), message.length());
@@ -66,6 +74,7 @@ void WebSocketHelper::onWebSocketEvent(WStype_t type, uint8_t* payload, size_t l
             Serial.printf("[WS] Connected to server. URL echo: %s\n", payload);
             ledState = 0x0000;  // Set LED pattern for active connection (solid on)
             connected = true;
+            shouldEnumerateFlag = true;
 
             // todo: Send initial status or registration message if needed
             break;

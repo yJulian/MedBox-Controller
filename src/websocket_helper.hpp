@@ -52,6 +52,8 @@ public:
      */
     void sendMessage(const String& message);
     
+    bool shouldEnumerate();
+
 private:
     WebSocketsClient webSocket;
     bool connected;
@@ -88,6 +90,8 @@ private:
      * Required because WebSocketsClient uses C-style callbacks.
      */
     static WebSocketHelper* instance;
+
+    bool shouldEnumerateFlag;
 };
 
 #endif // WEBSOCKET_HELPER_HPP

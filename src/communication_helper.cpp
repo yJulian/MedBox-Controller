@@ -1,6 +1,7 @@
 #include "communication_helper.hpp"
 #include "defines.hpp"
 #include <WiFi.h>
+#include <driver/uart.h>
 
 // Static instance pointer for ISR
 CommunicationHelper* CommunicationHelper::instance = nullptr;
@@ -24,32 +25,34 @@ void CommunicationHelper::begin(bool isMaster) {
     this->isMaster = isMaster;
     if (isMaster) {
         enumerationUartHandler = std::bind(&CommunicationHelper::enumerationUartMasterHandler, this, std::placeholders::_1);
-        uart.begin(115200, SERIAL_8N1, RX_PIN, TX_PIN);
-        Serial.println("[CommHelper] Configured as MASTER");
+        uart.begin(9600, SERIAL_8N1, RX_PIN, TX_PIN);
+        // Use pull-down on RX pin (idle state is now LOW with inversion)
+        Serial.println("[CommHelper] Configured as MASTER with inverted UART and RX pull-down");
     } else {
         enumerationUartHandler = std::bind(&CommunicationHelper::enumerationUartSlaveHandler, this, std::placeholders::_1);
-        uart.begin(115200, SERIAL_8N1, TX_PIN, RX_PIN);
-        Serial.println("[CommHelper] Configured as SLAVE");
+        uart.begin(9600, SERIAL_8N1, TX_PIN, RX_PIN);
+        // Use pull-down on RX pin (TX_PIN for slave due to swapped pins)
+        Serial.println("[CommHelper] Configured as SLAVE with inverted UART and RX pull-down");
         // Slave starts with enumeration handler
-        state = ENUMERATION;
     }
     Serial.println("[CommHelper] UART initialized on Serial2");
-    
+    uart.flush();
+
     attachInterrupt(digitalPinToInterrupt(SERIAL_IN_PIN), serialInputISR, CHANGE);
     Serial.println("[CommHelper] SERIAL_IN_PIN configured with interrupt");
+
+    sendUart("\n"); // Send newline to reset any partial commands
 
     Serial.println("[CommHelper] All communication interfaces initialized");
 }
 
 void CommunicationHelper::beginUartEnumeration() {
     state = ENUMERATION;
-    uartBuffer = "";
-
-    if (isMaster) {
-        setUartCallback(std::bind(&CommunicationHelper::enumerationUartMasterHandler, this, std::placeholders::_1));
-    } else {
-        Serial.println("[CommHelper] Slave already has enumeration handler set");
-    }
+    lastEnumerationTime = millis();
+    this->sendUart("ENUM_START");
+    delay(1000); // Give slaves time to prepare
+    this->currentSlaveIdx = 0;
+    pulseSerialOut();
     Serial.println("[CommHelper] UART enumeration started");
 }
 
@@ -57,10 +60,11 @@ void CommunicationHelper::beginUartEnumeration() {
 void CommunicationHelper::enumerationUartMasterHandler(const String& data) {
     Serial.printf("[CommHelper] Master received enumeration data: %s\n", data.c_str());
     
-    slaves[currentSlaveIdx].idx = currentSlaveIdx;
-    slaves[currentSlaveIdx].mac = data;
-    Serial.printf("[CommHelper] Registered Slave %u with MAC %s\n", currentSlaveIdx, data.c_str());
-    currentSlaveIdx++;
+    slaves[this->currentSlaveIdx].idx = this->currentSlaveIdx;
+    slaves[this->currentSlaveIdx].mac = data;
+    Serial.printf("[CommHelper] Registered Slave %u with MAC %s\n", this->currentSlaveIdx, data.c_str());
+    this->currentSlaveIdx++;
+    delay(300); // Short delay before sending ACK
     this->sendUart("ACK");
     lastEnumerationTime = millis();
 }
@@ -72,7 +76,7 @@ void CommunicationHelper::enumerationUartSlaveHandler(const String& data) {
         return;
     }
     if (waitForNextRequest) {
-        Serial.printf("[CommHelper] Slave received enumeration request: %s\n", data.c_str());
+        Serial.printf("[CommHelper] ACK Received: %s\n", data.c_str());
         waitForNextRequest = false;
         pulseSerialOut();
         return;
@@ -104,11 +108,16 @@ void CommunicationHelper::loop() {
     while (uart.available()) {
         char c = uart.read();
         
+        Serial.print(c); // Echo received char for debugging
+        
         // Buffer incoming data until newline
         if (c == '\n' || c == '\r') {
             // Trigger callback if buffer contains data
             if (uartBuffer.length() > 0) {
-                if (state == ENUMERATION)
+                if (!isMaster && uartBuffer == "ENUM_START") {
+                    state = ENUMERATION;
+                    Serial.println("[CommHelper] Slave entering ENUMERATION state");
+                } else if (state == ENUMERATION)
                     enumerationUartHandler(uartBuffer);
                 else if (uartCallback != nullptr)
                     uartCallback(uartBuffer);
@@ -119,11 +128,14 @@ void CommunicationHelper::loop() {
         }
     }
 
-    if (state == ENUMERATION && millis() - lastEnumerationTime < 1000) {
+    if (this->isMaster && state == ENUMERATION && millis() - lastEnumerationTime > 5000) {
         // End enumeration
-        state = NORMAL;
         Serial.println("[CommHelper] UART enumeration completed");
+        for(SlaveInfo slave : this->slaves) {
+            Serial.printf("[CommHelper] Slave %u - MAC: %s\n", slave.idx, slave.mac.c_str());
+        }
         this->sendUart("ENUM_DONE");
+        state = NORMAL;
         // todo notify upper layer
     }
 }
