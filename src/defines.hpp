@@ -1,6 +1,8 @@
 #pragma once
 #include <cstdint>
 
+#define MAX_SLAVES 10
+
 /**
  * @file defines.hpp
  * @brief Central configuration file for MedBox Controller

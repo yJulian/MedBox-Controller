@@ -4,6 +4,7 @@
 #include <Arduino.h>
 #include <HardwareSerial.h>
 #include <functional>
+#include "defines.hpp"
 
 /**
  * @brief Communication helper for inter-MedBox communication
@@ -28,6 +29,14 @@ public:
      * @param state Current state of SERIAL_IN_PIN (HIGH or LOW)
      */
     using SerialInputCallback = std::function<void(int state)>;
+
+    struct SlaveInfo {
+        uint16_t idx;
+        String mac;
+    };
+
+    // Example array size, adjust as needed
+    SlaveInfo slaves[MAX_SLAVES];
 
     CommunicationHelper();
     
@@ -99,18 +108,29 @@ public:
      * but the line only goes HIGH when all devices release it.
      */
     void pulseParallelPin();
+
+    void beginUartEnumeration();
     
 private:
     HardwareSerial uart;
     UartCallback uartCallback;
     SerialInputCallback serialInputCallback;
-    
+
+    enum State {
+        NORMAL,
+        ENUMERATION
+    } state;
+    bool isMaster;    
     String uartBuffer;
     
     // ISR flag and state for deferred processing
     volatile bool serialInputChanged;
     volatile int serialInputState;
-    
+
+    using enumerationUartHandler = std::function<void(const String& data)>;
+    void enumerationUartMasterHandler(const String& data);
+    void enumerationUartSlaveHandler(const String& data);
+
     /**
      * @brief Static instance pointer for ISR callbacks
      * 
@@ -124,6 +144,14 @@ private:
      * Sets flag and reads pin state for processing in main loop.
      */
     static void IRAM_ATTR serialInputISR();
+
+    uint16_t currentSlaveIdx = 0;
+
+    unsigned long lastEnumerationTime = 0;
+
+    void handleSlaveEnumerationRequest();
+
+    bool waitForNextRequest = false;
 };
 
 #endif // COMMUNICATION_HELPER_HPP

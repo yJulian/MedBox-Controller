@@ -1,5 +1,6 @@
 #include "communication_helper.hpp"
 #include "defines.hpp"
+#include <WiFi.h>
 
 // Static instance pointer for ISR
 CommunicationHelper* CommunicationHelper::instance = nullptr;
@@ -20,13 +21,17 @@ void CommunicationHelper::begin(bool isMaster) {
     } else {
         Serial.println("[CommHelper] Warning: Multiple CommunicationHelper instances detected!");
     }
-
+    this->isMaster = isMaster;
     if (isMaster) {
-        Serial.println("[CommHelper] Configured as MASTER");
+        uartCallback = std::bind(&CommunicationHelper::enumerationUartMasterHandler, this, std::placeholders::_1);
         uart.begin(115200, SERIAL_8N1, RX_PIN, TX_PIN);
+        Serial.println("[CommHelper] Configured as MASTER");
     } else {
-        Serial.println("[CommHelper] Configured as SLAVE");
+        uartCallback = std::bind(&CommunicationHelper::enumerationUartSlaveHandler, this, std::placeholders::_1);
         uart.begin(115200, SERIAL_8N1, TX_PIN, RX_PIN);
+        Serial.println("[CommHelper] Configured as SLAVE");
+        // Slave starts with enumeration handler
+        state = ENUMERATION;
     }
     Serial.println("[CommHelper] UART initialized on Serial2");
     
@@ -36,10 +41,55 @@ void CommunicationHelper::begin(bool isMaster) {
     Serial.println("[CommHelper] All communication interfaces initialized");
 }
 
+void CommunicationHelper::beginUartEnumeration() {
+    state = ENUMERATION;
+    uartBuffer = "";
+
+    if (isMaster) {
+        setUartCallback(std::bind(&CommunicationHelper::enumerationUartMasterHandler, this, std::placeholders::_1));
+    } else {
+        Serial.println("[CommHelper] Slave already has enumeration handler set");
+    }
+    Serial.println("[CommHelper] UART enumeration started");
+}
+
+
+void CommunicationHelper::enumerationUartMasterHandler(const String& data) {
+    Serial.printf("[CommHelper] Master received enumeration data: %s\n", data.c_str());
+    
+    slaves[currentSlaveIdx].idx = currentSlaveIdx;
+    slaves[currentSlaveIdx].mac = data;
+    Serial.printf("[CommHelper] Registered Slave %u with MAC %s\n", currentSlaveIdx, data.c_str());
+    currentSlaveIdx++;
+    lastEnumerationTime = millis();
+}
+
+void CommunicationHelper::enumerationUartSlaveHandler(const String& data) {
+    if (waitForNextRequest) {
+        Serial.printf("[CommHelper] Slave received enumeration request: %s\n", data.c_str());
+        waitForNextRequest = false;
+        pulseSerialOut();
+        return;
+    }
+    Serial.printf("[CommHelper] Slave received enumeration data: %s\n", data.c_str());
+}
+
+void CommunicationHelper::handleSlaveEnumerationRequest() {
+    // Implementation for handling slave enumeration request
+    String mac = WiFi.macAddress();
+    CommunicationHelper::instance->sendUart(mac);
+    waitForNextRequest = true;
+    Serial.printf("[CommHelper] Slave sent MAC address for enumeration: %s\n", mac.c_str());
+}
+
 void CommunicationHelper::loop() {
     // Process serial input interrupt flag (deferred from ISR)
     if (serialInputChanged) {
         serialInputChanged = false;
+        // handle Slave Enumeration Request
+        if (state == ENUMERATION && !isMaster) {
+            handleSlaveEnumerationRequest();
+        }
         if (serialInputCallback != nullptr) {
             serialInputCallback(serialInputState);
         }
@@ -53,12 +103,21 @@ void CommunicationHelper::loop() {
         if (c == '\n' || c == '\r') {
             // Trigger callback if buffer contains data
             if (uartBuffer.length() > 0 && uartCallback != nullptr) {
-                uartCallback(uartBuffer);
+                if (state == NORMAL) 
+                    uartCallback(uartBuffer);
+                else if (state == ENUMERATION)
+                    enumerationUartHandler(uartBuffer);
             }
             uartBuffer = "";
         } else {
             uartBuffer += c;
         }
+    }
+
+    if (state == ENUMERATION && millis() - lastEnumerationTime < 1000) {
+        // End enumeration
+        state = NORMAL;
+        Serial.println("[CommHelper] UART enumeration completed");
     }
 }
 
@@ -79,7 +138,7 @@ void CommunicationHelper::setUartCallback(UartCallback callback) {
 // Serial Pin Communication Methods
 // ============================================================================
 
-void CommunicationHelper::pulseSerialOut(uint32_t delayUs = 1000) {
+void CommunicationHelper::pulseSerialOut(uint32_t delayUs) {
     // Pull SERIAL_OUT_PIN LOW for 1ms pulse
     digitalWrite(SERIAL_OUT_PIN, LOW);
     delayMicroseconds(delayUs); // 1ms pulse
