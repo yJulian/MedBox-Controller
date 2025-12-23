@@ -9,9 +9,9 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include <gpio.hpp>
-#include <wifi_helper.hpp>
-#include <websocket_helper.hpp>
-#include <communication_helper.hpp>
+#include "network/wifi_helper.hpp"
+#include "network/websocket_helper.hpp"
+#include "network/communication_helper.hpp"
 
 // Global state
 bool wifi_connected = false;
