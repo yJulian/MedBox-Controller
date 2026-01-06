@@ -6,6 +6,9 @@
 #include <functional>
 #include "defines.hpp"
 
+// Forward declaration
+class WebSocketHelper;
+
 /**
  * @brief Communication helper for inter-MedBox communication
  * 
@@ -110,6 +113,12 @@ public:
     void pulseParallelPin();
 
     void beginUartEnumeration();
+
+    /**
+     * @brief Set WebSocketHelper for sending enumeration results
+     * @param ws Pointer to WebSocketHelper instance
+     */
+    void setWebSocketHelper(WebSocketHelper* ws);
     
 private:
     HardwareSerial uart;
@@ -154,6 +163,8 @@ private:
     void handleSlaveEnumerationRequest();
 
     bool waitForNextRequest = false;
+
+    WebSocketHelper* webSocketHelper = nullptr;
 };
 
 #endif // COMMUNICATION_HELPER_HPP

@@ -1,7 +1,9 @@
 #include "communication_helper.hpp"
+#include "websocket_helper.hpp"
 #include "defines.hpp"
 #include <WiFi.h>
 #include <driver/uart.h>
+#include <ArduinoJson.h>
 
 // Static instance pointer for ISR
 CommunicationHelper* CommunicationHelper::instance = nullptr;
@@ -136,7 +138,23 @@ void CommunicationHelper::loop() {
         }
         this->sendUart("ENUM_DONE");
         state = NORMAL;
-        // todo notify upper layer
+        
+        // Send enumeration results via WebSocket if connected
+        if (webSocketHelper != nullptr && webSocketHelper->isConnected()) {
+            JsonDocument doc;
+            JsonArray slavesArray = doc["slaves"].to<JsonArray>();
+            
+            for (uint8_t i = 0; i < currentSlaveIdx; i++) {
+                JsonObject slaveObj = slavesArray.add<JsonObject>();
+                slaveObj["idx"] = slaves[i].idx;
+                slaveObj["mac"] = slaves[i].mac;
+            }
+            
+            String message;
+            serializeJson(doc, message);
+            webSocketHelper->sendMessage(message);
+            Serial.printf("[CommHelper] Sent enumeration results via WebSocket: %s\n", message.c_str());
+        }
     }
 }
 
@@ -169,6 +187,11 @@ void CommunicationHelper::pulseSerialOut(uint32_t delayUs) {
 void CommunicationHelper::setSerialInputCallback(SerialInputCallback callback) {
     serialInputCallback = callback;
     Serial.println("[CommHelper] SERIAL_IN_PIN callback registered");
+}
+
+void CommunicationHelper::setWebSocketHelper(WebSocketHelper* ws) {
+    webSocketHelper = ws;
+    Serial.println("[CommHelper] WebSocketHelper registered");
 }
 
 // ============================================================================
