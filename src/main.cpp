@@ -67,11 +67,11 @@ void setup() {
   xTaskCreatePinnedToCore(
     ledTask,          // Task function
     "ledTask",        // Task name (for debugging)
-    4096,             // Stack size in bytes
+    128,  //4096,     // Stack size in bytes
     NULL,             // Task parameter (unused)
     1,                // Priority (1 = low)
     NULL,             // Task handle (not needed)
-    1                 // Core ID (0 or 1, using 1)
+    1                 // Core ID (0 or 1)
   );
   
   master = isMaster();
