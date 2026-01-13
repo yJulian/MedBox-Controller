@@ -1,0 +1,36 @@
+#include "compartment_set.hpp"
+#include <esp32-hal.h>
+#define dispense_intra_delay_ms 500
+
+CompartmentSet::CompartmentSet(PillDispenser* dispenserA, PillDispenser* dispenserB)
+    : dispenserA(dispenserA), dispenserB(dispenserB) {
+}
+
+void CompartmentSet::begin() {
+    // Initialize dispensers if they have begin methods
+    if (dispenserA) {
+        dispenserA->begin();
+    }
+    if (dispenserB) {
+        dispenserB->begin();
+    }
+}
+
+void CompartmentSet::dispense(int compartmentNumber, int amount) {
+    if (compartmentNumber % 2 == 0 && dispenserA) {
+        dispenseFromCompartment(dispenserA, amount);
+    } else if (dispenserB) {
+        dispenseFromCompartment(dispenserB, amount);
+    } 
+}
+
+void CompartmentSet::dispenseFromCompartment(PillDispenser* dispenser, int amount) {
+    for (int i = 0; i < amount; ++i) {
+        if (dispenser == dispenserA) {
+            dispenser->dispensePillCompartmentA();
+        } else if (dispenser == dispenserB) {
+            dispenser->dispensePillCompartmentB();
+        }
+        vTaskDelay(dispense_intra_delay_ms / portTICK_PERIOD_MS); // Delay between dispensing pills
+    }
+}
