@@ -1,4 +1,5 @@
 #include "websocket_helper.hpp"
+#include "communication_helper.hpp"
 #include <defines.hpp>
 
 // Static instance for callback access
@@ -7,6 +8,7 @@ WebSocketHelper* WebSocketHelper::instance = nullptr;
 WebSocketHelper::WebSocketHelper() {
     connected = false;
     instance = this;
+    webSocketCallback = nullptr;
 }
 
 void WebSocketHelper::begin() {
@@ -53,6 +55,14 @@ bool WebSocketHelper::shouldEnumerate() {
     return false;
 }
 
+void WebSocketHelper::setWebSocketCallback(WebSocketCallback callback) {
+    webSocketCallback = callback;
+}
+
+void WebSocketHelper::setCommunicationHelper(CommunicationHelper* comm) {
+    communicationHelper = comm;
+}
+
 void WebSocketHelper::sendMessage(const String& message) {
     if (connected) {
         webSocket.sendTXT((uint8_t *)message.c_str(), message.length());
@@ -82,16 +92,20 @@ void WebSocketHelper::onWebSocketEvent(WStype_t type, uint8_t* payload, size_t l
         case WStype_TEXT:
             Serial.printf("[WS] Received text message (len=%u): %s\n", (unsigned)length, payload);
             {
-                // Parse incoming JSON message
-                JsonDocument doc;
-                DeserializationError err = deserializeJson(doc, payload, length);
-                if (err) {
-                    Serial.printf("[WS] JSON parse error: %s (message length: %u)\n", 
-                                  err.c_str(), (unsigned)length);
+                String message = String((char*)payload).substring(0, length);
+
+                // Forward incoming WebSocket data via UART if available
+                if (communicationHelper != nullptr) {
+                    communicationHelper->sendUart(message);
                 } else {
-                    // Successfully parsed - route to handler
-                    handleJsonMessage(doc);
+                    Serial.println("[WS] No CommunicationHelper registered to forward message via UART.");
                 }
+
+                // Invoke user-defined callback if registered
+                if (webSocketCallback != nullptr)
+                    webSocketCallback(message);
+                else 
+                    Serial.println("[WS] No WebSocket callback registered to handle message.");
             }
             break;
             

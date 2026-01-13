@@ -5,6 +5,7 @@
  * Orchestrates WiFi connection, WebSocket communication, and LED status display.
  * Uses FreeRTOS task for non-blocking LED pattern animation.
  */
+#define DEBUG
 
 #include <Arduino.h>
 #include <WiFi.h>
@@ -12,6 +13,7 @@
 #include "network/wifi_helper.hpp"
 #include "network/websocket_helper.hpp"
 #include "network/communication_helper.hpp"
+#include "network/message_parser.hpp"
 
 // Global state
 bool wifi_connected = false;
@@ -82,6 +84,9 @@ void setup() {
   // Attempt WiFi connection (or start BLE config if needed)
   wifi_connected = true;
 
+  // Initialize message parser to handle incoming messages
+  MessageParser msgParser(WiFi.macAddress());
+
   // Only master device manages WiFi and WebSocket
   if (master) {
     wifi_connected = wifiHelper.connect();
@@ -89,16 +94,21 @@ void setup() {
     // Initialize WebSocket if WiFi connection succeeded
     if (wifi_connected) {
       Serial.println("[Setup] WiFi connected, initializing WebSocket...");
+      wsHelper.setCommunicationHelper(&commHelper);
       wsHelper.begin();
     } else {
       Serial.println("[Setup] WiFi not connected, BLE configuration active");
     }
+    wsHelper.setWebSocketCallback([&msgParser](const String& data) {
+      // Also parse the message directly
+      msgParser.parseMessage(data);
+    });
   } else {
     Serial.println("[Setup] Configured as SLAVE device, skipping WiFi/WebSocket setup");
 
-    commHelper.setUartCallback([](const String& data) {
-      Serial.print("[UART Callback] Received data: ");
-      Serial.println(data);
+    // Register UART callback to parse incoming messages
+    commHelper.setUartCallback([&msgParser](const String& data) {
+      msgParser.parseMessage(data);
     });
 
     ledState = 0x0000; // Indicate slave mode with LED pattern
