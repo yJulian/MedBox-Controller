@@ -133,3 +133,8 @@ src/
 - Automatic reconnection on disconnect
 - JSON message parsing with error handling
 - Event-driven architecture for connection state
+
+# Limitations
+Due to the fact that UART has an IDLE state of HIGH/'1' the backchannel of the communication does not work in reverse direction when more than one slave is connected.
+It reproducably work with two ESPs but does not work with more than two.
+The UART reverse channel code should be edited to support tri-state drivers or use a chained uart configuration to officially support more than one slave.

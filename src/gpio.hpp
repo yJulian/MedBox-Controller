@@ -12,4 +12,11 @@
  */
 void initializeGPIO();
 
+/**
+ * @brief Check if this device is configured as Master
+ * 
+ * @return true if Master, false if Slave
+ */
+bool isMaster();
+
 #endif // GPIO_HPP

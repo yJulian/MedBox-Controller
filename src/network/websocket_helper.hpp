@@ -2,6 +2,7 @@
 #define WEBSOCKET_HELPER_HPP
 
 #include <Arduino.h>
+#include <WiFiClientSecure.h>
 #include <WebSocketsClient.h>
 #include <ArduinoJson.h>
 
@@ -51,6 +52,8 @@ public:
      */
     void sendMessage(const String& message);
     
+    bool shouldEnumerate();
+
 private:
     WebSocketsClient webSocket;
     bool connected;
@@ -87,6 +90,8 @@ private:
      * Required because WebSocketsClient uses C-style callbacks.
      */
     static WebSocketHelper* instance;
+
+    bool shouldEnumerateFlag;
 };
 
 #endif // WEBSOCKET_HELPER_HPP

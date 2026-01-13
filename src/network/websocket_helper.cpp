@@ -12,11 +12,14 @@ WebSocketHelper::WebSocketHelper() {
 void WebSocketHelper::begin() {
     Serial.println("[WS] Initializing WebSocket connection...");
     
-    // Configure WebSocket connection endpoint
-    webSocket.begin(WS_HOST, WS_PORT, WS_PATH);
-    
+    // Configure WebSocket connection endpoint for plain ws (no TLS)
+    // Ensure WS_HOST matches server binding and WS_PATH matches endpoint
+    const String path = WS_PATH + WiFi.macAddress();
+    webSocket.begin(WS_HOST, WS_PORT, path);
+
     // Register event handler using lambda to bridge C-style callback
     webSocket.onEvent([](WStype_t type, uint8_t* payload, size_t length) {
+        // Verbose event pre-log for diagnostics
         if (instance) {
             instance->onWebSocketEvent(type, payload, length);
         }
@@ -25,11 +28,13 @@ void WebSocketHelper::begin() {
     // Enable heartbeat mechanism to detect dead connections
     // Parameters: ping_interval_ms, pong_timeout_ms, disconnect_timeout_count
     webSocket.enableHeartbeat(WS_PING_INTERVAL, 3000, 2);
+    Serial.printf("[WS] Heartbeat enabled: ping=%ums, pong-timeout=%ums, max-missed=%u\n", (unsigned)WS_PING_INTERVAL, 3000u, 2u);
     
     // Configure automatic reconnection on disconnect
     webSocket.setReconnectInterval(WS_RECONNECT_INTERVAL);
+    Serial.printf("[WS] Reconnect interval set to %ums\n", (unsigned)WS_RECONNECT_INTERVAL);
     
-    Serial.printf("[WS] Configured to connect to ws://%s:%d%s\n", WS_HOST, WS_PORT, WS_PATH);
+    Serial.printf("[WS] Configured to connect to ws://%s:%d%s\n", WS_HOST, WS_PORT, path);
 }
 
 void WebSocketHelper::loop() {
@@ -38,6 +43,14 @@ void WebSocketHelper::loop() {
 
 bool WebSocketHelper::isConnected() {
     return connected;
+}
+
+bool WebSocketHelper::shouldEnumerate() {
+    if (shouldEnumerateFlag) {
+        shouldEnumerateFlag = false;
+        return true;
+    }
+    return false;
 }
 
 void WebSocketHelper::sendMessage(const String& message) {
@@ -52,22 +65,22 @@ void WebSocketHelper::sendMessage(const String& message) {
 void WebSocketHelper::onWebSocketEvent(WStype_t type, uint8_t* payload, size_t length) {
     switch(type) {
         case WStype_DISCONNECTED:
-            Serial.println("[WS] Disconnected from server!");
+            Serial.println("[WS] Disconnected from server! Will attempt reconnect.");
             ledState = 0xFF00;  // Set LED pattern to indicate disconnection
             connected = false;
             break;
             
         case WStype_CONNECTED:
-            Serial.printf("[WS] Connected to server: %s\n", payload);
+            Serial.printf("[WS] Connected to server. URL echo: %s\n", payload);
             ledState = 0x0000;  // Set LED pattern for active connection (solid on)
             connected = true;
-            
-            // Send handshake message to backend
-            webSocket.sendTXT("ESP32 Connected");
+            shouldEnumerateFlag = true;
+
+            // todo: Send initial status or registration message if needed
             break;
             
         case WStype_TEXT:
-            Serial.printf("[WS] Received text message: %s\n", payload);
+            Serial.printf("[WS] Received text message (len=%u): %s\n", (unsigned)length, payload);
             {
                 // Parse incoming JSON message
                 JsonDocument doc;
@@ -83,26 +96,24 @@ void WebSocketHelper::onWebSocketEvent(WStype_t type, uint8_t* payload, size_t l
             break;
             
         case WStype_BIN:
-            Serial.printf("[WS] Received binary data, length: %u bytes\n", length);
+            Serial.printf("[WS] Received binary data, length: %u bytes\n", (unsigned)length);
             // Binary protocol not yet implemented
             // TODO: Add binary message handling if needed
             break;
             
         case WStype_PING:
-            Serial.println("[WS] Received ping (heartbeat check)");
             break;
             
         case WStype_PONG:
-            Serial.println("[WS] Received pong (heartbeat response)");
             break;
             
         case WStype_ERROR:
-            Serial.printf("[WS] Error occurred: %s\n", payload);
+            Serial.printf("[WS] Error occurred (len=%u): %s\n", (unsigned)length, payload ? (const char*)payload : "<null>");
             connected = false;
             break;
             
         default:
-            Serial.printf("[WS] Unknown event type: %d\n", type);
+            Serial.printf("[WS] Unknown event type: %d (len=%u)\n", (int)type, (unsigned)length);
             break;
     }
 }
@@ -127,14 +138,4 @@ void WebSocketHelper::handleJsonMessage(const JsonDocument& doc) {
 
     Serial.printf("[WS] Parsed JSON -> type: '%s', command: '%s', value: %d\n", 
                   type, command, value);
-
-    // Route to specific handlers based on message type
-    // Extend this section as backend protocol evolves
-    
-    // Example routing (to be implemented):
-    // if (strcmp(type, "motor") == 0) {
-    //     handleMotorCommand(command, value);
-    // } else if (strcmp(type, "status") == 0) {
-    //     handleStatusRequest(command);
-    // }
 }
