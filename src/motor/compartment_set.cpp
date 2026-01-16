@@ -26,18 +26,18 @@ void CompartmentSet::moveFunnelToPosition(RotaryFunnel::FunnelPosition position)
 }
 
 void CompartmentSet::dispense(int compartmentNumber, int amount) {
-    if (compartmentNumber % 2 == 0 && dispenserA) {
+    if ((compartmentNumber == 0 || compartmentNumber == 1) && dispenserA) {
         dispenseFromCompartment(dispenserA, amount);
     } else if (dispenserB) {
         dispenseFromCompartment(dispenserB, amount);
     } 
 }
 
-void CompartmentSet::dispenseFromCompartment(PillDispenser* dispenser, int amount) {
+void CompartmentSet::dispenseFromCompartment(PillDispenser* dispenser, int compartmentNumber, int amount) {
     for (int i = 0; i < amount; ++i) {
-        if (dispenser == dispenserA) {
+        if (compartmentNumber % 2 == 0) {
             dispenser->dispensePillCompartmentA();
-        } else if (dispenser == dispenserB) {
+        } else {
             dispenser->dispensePillCompartmentB();
         }
         vTaskDelay(dispense_intra_delay_ms / portTICK_PERIOD_MS); // Delay between dispensing pills

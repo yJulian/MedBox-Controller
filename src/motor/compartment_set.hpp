@@ -17,5 +17,5 @@ private:
     PillDispenser* dispenserB;
     RotaryFunnel* funnel;
 
-    void dispenseFromCompartment(PillDispenser* dispenser, int amount);
+    void dispenseFromCompartment(PillDispenser* dispenser, int compartmentNumber, int amount);
 };
