@@ -64,6 +64,51 @@
 #define RX_PIN 16
 
 // ============================================================================
+// Motor Control Pins
+// ============================================================================
+
+/**
+ * @brief Compartment A Stepper Motor Pins (4-wire)
+ * 
+ * Four pins for controlling the stepper motor coils (m1, m2, m3, m4)
+ * Used with the Stepper library for precise step control
+ */
+#define COMPARTMENT_A_PIN1 22
+#define COMPARTMENT_A_PIN2 23
+#define COMPARTMENT_A_PIN3 18
+#define COMPARTMENT_A_PIN4 5
+
+/**
+ * @brief Compartment B Stepper Motor Pins (4-wire)
+ * 
+ * Four pins for controlling the stepper motor coils (m1, m2, m3, m4)
+ * Used with the Stepper library for precise step control
+ */
+#define COMPARTMENT_B_PIN1 4
+#define COMPARTMENT_B_PIN2 0
+#define COMPARTMENT_B_PIN3 35
+#define COMPARTMENT_B_PIN4 33
+
+/**
+ * @brief Rotary Funnel Stepper Motor Pins (4-wire)
+ * 
+ * Four pins for controlling the rotary funnel stepper motor coils (m1, m2, m3, m4)
+ * Used to rotate the funnel between different positions (0°, 90°, 180°, 270°)
+ */
+#define FUNNEL_PIN1 32
+#define FUNNEL_PIN2 25
+#define FUNNEL_PIN3 26
+#define FUNNEL_PIN4 27
+
+/**
+ * @brief Steps per revolution for stepper motors
+ * 
+ * This value depends on the specific stepper motor model.
+ * Standard NEMA 17: 200 steps/rev, NEMA 23: 200 steps/rev
+ */
+#define STEPPER_STEPS_PER_REV 200
+
+// ============================================================================
 // WebSocket Configuration
 // ============================================================================
 

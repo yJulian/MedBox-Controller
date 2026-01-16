@@ -2,8 +2,8 @@
 #include <esp32-hal.h>
 #define dispense_intra_delay_ms 500
 
-CompartmentSet::CompartmentSet(PillDispenser* dispenserA, PillDispenser* dispenserB)
-    : dispenserA(dispenserA), dispenserB(dispenserB) {
+CompartmentSet::CompartmentSet(PillDispenser* dispenserA, PillDispenser* dispenserB, RotaryFunnel* funnel)
+    : dispenserA(dispenserA), dispenserB(dispenserB), funnel(funnel) {
 }
 
 void CompartmentSet::begin() {
@@ -13,6 +13,15 @@ void CompartmentSet::begin() {
     }
     if (dispenserB) {
         dispenserB->begin();
+    }
+    if (funnel) {
+        funnel->begin();
+    }
+}
+
+void CompartmentSet::moveFunnelToPosition(RotaryFunnel::FunnelPosition position) {
+    if (funnel) {
+        funnel->rotateToPosition(position);
     }
 }
 

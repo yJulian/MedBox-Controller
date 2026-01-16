@@ -1,8 +1,11 @@
+#pragma once
+
 #include "pill_dispenser.hpp"
+#include "stepper/Stepper.h"
 
 class PillDispenserStepper: public PillDispenser {
 public:
-    PillDispenserStepper(int stepPin, int dirPin, int enablePin);
+    PillDispenserStepper(int number_of_stepsm, int m1, int m2, int m3, int m4);
     
     void dispensePillCompartmentA();
     void dispensePillCompartmentB();
@@ -10,9 +13,11 @@ public:
     void begin();
 
 private:
-    int stepPin;
-    int dirPin;
-    int enablePin;
+    int number_of_steps;
+    int m1;
+    int m2;
+    int m3;
+    int m4;
 
-    void stepMotor(int steps, bool direction);
+    Stepper stepperMotor;
 };

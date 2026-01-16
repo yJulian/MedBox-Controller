@@ -1,3 +1,5 @@
+#pragma once
+
 class PillDispenser {
 public:
     PillDispenser();

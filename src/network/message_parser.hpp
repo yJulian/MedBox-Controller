@@ -3,9 +3,17 @@
 #include <HardwareSerial.h>
 #include <ArduinoJson.h>
 
+class CompartmentSet;  // Forward declaration
+
 class MessageParser {
 public:
     MessageParser(String targetMac);
+    
+    /**
+     * @brief Set the compartment set for dispensing commands
+     * @param compartmentSet Pointer to the CompartmentSet instance
+     */
+    void setCompartmentSet(CompartmentSet* compartmentSet);
     
     /**
      * @brief Parse incoming message string
@@ -16,4 +24,5 @@ public:
 
 private:
     String targetBoxMac;
+    CompartmentSet* compartmentSet = nullptr;
 };

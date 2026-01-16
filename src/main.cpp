@@ -14,6 +14,9 @@
 #include "network/websocket_helper.hpp"
 #include "network/communication_helper.hpp"
 #include "network/message_parser.hpp"
+#include "motor/compartment_set.hpp"
+#include "motor/pill_dispenser_stepper.hpp"
+#include "motor/rotary_funnel.hpp"
 
 // Global state
 bool wifi_connected = false;
@@ -22,6 +25,12 @@ bool wifi_connected = false;
 WifiHelper wifiHelper;
 WebSocketHelper wsHelper;
 CommunicationHelper commHelper;
+
+// Motor control instances
+PillDispenser* dispenserA = nullptr;
+PillDispenser* dispenserB = nullptr;
+CompartmentSet* compartmentSet = nullptr;
+RotaryFunnel* rotaryFunnel = nullptr;
 
 /**
  * @brief Global LED state pattern (16-bit rotating pattern)
@@ -78,6 +87,37 @@ void setup() {
   
   master = isMaster();
 
+  // Initialize Compartment Set with Stepper Motors
+  // Each compartment uses a 4-wire stepper motor (m1, m2, m3, m4)
+  dispenserA = new PillDispenserStepper(
+    STEPPER_STEPS_PER_REV,
+    COMPARTMENT_A_PIN1,
+    COMPARTMENT_A_PIN2,
+    COMPARTMENT_A_PIN3,
+    COMPARTMENT_A_PIN4
+  );
+  dispenserB = new PillDispenserStepper(
+    STEPPER_STEPS_PER_REV,
+    COMPARTMENT_B_PIN1,
+    COMPARTMENT_B_PIN2,
+    COMPARTMENT_B_PIN3,
+    COMPARTMENT_B_PIN4
+  );
+    // Initialize Rotary Funnel
+  rotaryFunnel = new RotaryFunnel(
+    STEPPER_STEPS_PER_REV,
+    FUNNEL_PIN1,
+    FUNNEL_PIN2,
+    FUNNEL_PIN3,
+    FUNNEL_PIN4
+  );
+
+  // Create and initialize compartment set
+  compartmentSet = new CompartmentSet(dispenserA, dispenserB, rotaryFunnel);
+  compartmentSet->begin();
+  
+  Serial.println("[Setup] Rotary Funnel initialized");
+
   // Initialize communication helper (UART, Serial, Parallel pins)
   commHelper.begin(master);
   
@@ -86,6 +126,9 @@ void setup() {
 
   // Initialize message parser to handle incoming messages
   MessageParser msgParser(WiFi.macAddress());
+  
+  // Set compartment set in message parser
+  msgParser.setCompartmentSet(compartmentSet);
 
   // Only master device manages WiFi and WebSocket
   if (master) {

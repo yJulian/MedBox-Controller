@@ -1,7 +1,15 @@
 #include "message_parser.hpp"
+#include "../motor/compartment_set.hpp"
 
 MessageParser::MessageParser(String targetMac) : targetBoxMac(targetMac) {
     // Constructor implementation (if needed)
+}
+
+void MessageParser::setCompartmentSet(CompartmentSet* compartmentSet) {
+    this->compartmentSet = compartmentSet;
+    #ifdef DEBUG
+    Serial.println("[MessageParser] CompartmentSet assigned");
+    #endif
 }
 
 void MessageParser::parseMessage(const String& message) {
@@ -30,7 +38,15 @@ void MessageParser::parseMessage(const String& message) {
             int compartment = doc["message"]["compartmentNumber"];
             int amount = doc["message"]["amountOfPillsToDispense"];
 
-            //todo : Implement command handling logic
+            if (compartmentSet != nullptr) {
+                #ifdef DEBUG
+                Serial.printf("[MessageParser] Dispensing %d pills from compartment %d\n", amount, compartment);
+                #endif
+                compartmentSet->dispense(compartment, amount);
+            } else {
+                Serial.println("[MessageParser] ERROR: CompartmentSet not initialized!");
+            }
+            break;
         }
     }
 }
