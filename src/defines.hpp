@@ -84,10 +84,10 @@
  * Four pins for controlling the stepper motor coils (m1, m2, m3, m4)
  * Used with the Stepper library for precise step control
  */
-#define COMPARTMENT_B_PIN1 4
-#define COMPARTMENT_B_PIN2 0
-#define COMPARTMENT_B_PIN3 35
-#define COMPARTMENT_B_PIN4 33
+#define COMPARTMENT_B_PIN1 14
+#define COMPARTMENT_B_PIN2 16
+#define COMPARTMENT_B_PIN3 17
+#define COMPARTMENT_B_PIN4 19
 
 /**
  * @brief Rotary Funnel Stepper Motor Pins (4-wire)
@@ -106,7 +106,7 @@
  * This value depends on the specific stepper motor model.
  * Standard NEMA 17: 200 steps/rev, NEMA 23: 200 steps/rev
  */
-#define STEPPER_STEPS_PER_REV 200
+#define STEPPER_STEPS_PER_REV 2048
 
 // ============================================================================
 // WebSocket Configuration

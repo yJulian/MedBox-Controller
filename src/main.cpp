@@ -26,6 +26,8 @@ WifiHelper wifiHelper;
 WebSocketHelper wsHelper;
 CommunicationHelper commHelper;
 
+MessageParser msgParser;
+
 // Motor control instances
 PillDispenser* dispenserA = nullptr;
 PillDispenser* dispenserB = nullptr;
@@ -78,7 +80,7 @@ void setup() {
   xTaskCreatePinnedToCore(
     ledTask,          // Task function
     "ledTask",        // Task name (for debugging)
-    128,  //4096,     // Stack size in bytes
+    2048,             // Stack size in bytes
     NULL,             // Task parameter (unused)
     1,                // Priority (1 = low)
     NULL,             // Task handle (not needed)
@@ -125,7 +127,7 @@ void setup() {
   wifi_connected = true;
 
   // Initialize message parser to handle incoming messages
-  MessageParser msgParser(WiFi.macAddress());
+  msgParser.setTargetBoxMac(WiFi.macAddress());
   
   // Set compartment set in message parser
   msgParser.setCompartmentSet(compartmentSet);
@@ -142,15 +144,16 @@ void setup() {
     } else {
       Serial.println("[Setup] WiFi not connected, BLE configuration active");
     }
-    wsHelper.setWebSocketCallback([&msgParser](const String& data) {
+    wsHelper.setWebSocketCallback([](const String& data) {
       // Also parse the message directly
+      Serial.println("[WebSocket 1] Message received, parsing...");
       msgParser.parseMessage(data);
     });
   } else {
     Serial.println("[Setup] Configured as SLAVE device, skipping WiFi/WebSocket setup");
 
     // Register UART callback to parse incoming messages
-    commHelper.setUartCallback([&msgParser](const String& data) {
+    commHelper.setUartCallback([](const String& data) {
       msgParser.parseMessage(data);
     });
 

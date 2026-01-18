@@ -7,7 +7,6 @@ class CompartmentSet;  // Forward declaration
 
 class MessageParser {
 public:
-    MessageParser(String targetMac);
     
     /**
      * @brief Set the compartment set for dispensing commands
@@ -21,6 +20,8 @@ public:
      * @return true if parsing was successful, false otherwise
      */
     void parseMessage(const String& message);
+
+    void setTargetBoxMac(const String& mac);
 
 private:
     String targetBoxMac;

@@ -27,9 +27,9 @@ void CompartmentSet::moveFunnelToPosition(RotaryFunnel::FunnelPosition position)
 
 void CompartmentSet::dispense(int compartmentNumber, int amount) {
     if ((compartmentNumber == 0 || compartmentNumber == 1) && dispenserA) {
-        dispenseFromCompartment(dispenserA, amount);
+        dispenseFromCompartment(dispenserA, compartmentNumber, amount);
     } else if (dispenserB) {
-        dispenseFromCompartment(dispenserB, amount);
+        dispenseFromCompartment(dispenserB, compartmentNumber, amount);
     } 
 }
 
