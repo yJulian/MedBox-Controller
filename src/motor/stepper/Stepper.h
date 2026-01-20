@@ -92,7 +92,13 @@ class Stepper {
     // mover method:
     void step(int number_of_steps);
 
+    // move to position and then stop all power consumption
+    void stepAndStop(int number_of_steps);
+
     void begin();
+
+    void pause();
+    void resume();
 
   private:
     void stepMotor(int this_step);

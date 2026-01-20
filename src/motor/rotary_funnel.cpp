@@ -11,6 +11,8 @@ RotaryFunnel::RotaryFunnel(int number_of_steps, int m1, int m2, int m3, int m4)
 
 void RotaryFunnel::begin() {
     stepperMotor.setSpeed(SPEED_RPM);
+    stepperMotor.begin();
+    mux = xSemaphoreCreateMutex();
 }
 
 void RotaryFunnel::rotateToPosition(FunnelPosition position) {
@@ -39,7 +41,9 @@ void RotaryFunnel::rotateToPosition(FunnelPosition position) {
     
     // Rotate to target position
     if (stepsToMove != 0) {
-        stepperMotor.step(stepsToMove);
+        xSemaphoreTake(mux, portMAX_DELAY);
+        stepperMotor.stepAndStop(stepsToMove);
         currentPosition = position;
+        xSemaphoreGive(mux);
     }
 }

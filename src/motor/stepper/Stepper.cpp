@@ -28,6 +28,18 @@ void Stepper::begin() {
   pinMode(this->motor_pin_4, OUTPUT);
 }
 
+void Stepper::pause() {
+  // set all pins to LOW to disable the motor
+  digitalWrite(this->motor_pin_1, LOW);
+  digitalWrite(this->motor_pin_2, LOW);
+  digitalWrite(this->motor_pin_3, LOW);
+  digitalWrite(this->motor_pin_4, LOW);
+}
+
+void Stepper::resume() {
+  // no action needed; motor will step when commanded
+}
+
 /*
  * Sets the speed in revs per minute
  */
@@ -74,6 +86,11 @@ void Stepper::step(int steps_to_move)
       taskYIELD(); // remaining < 1 tick -> at least yield CPU
     }
   }
+}
+
+void Stepper::stepAndStop(int number_of_steps) {
+  step(number_of_steps);
+  pause(); // Disable motor to stop power consumption
 }
 
 void Stepper::internalStep(unsigned long now, int &steps_left) {

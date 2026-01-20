@@ -1,6 +1,8 @@
 #pragma once
 
 #include "stepper/Stepper.h"
+#include <freertos/FreeRTOS.h>
+#include <freertos/semphr.h>
 
 class RotaryFunnel {
 public:
@@ -23,6 +25,7 @@ private:
     int m2;
     int m3;
     int m4;
+    SemaphoreHandle_t mux;
 
     FunnelPosition currentPosition = POSITION_0;
 
