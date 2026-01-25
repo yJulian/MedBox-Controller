@@ -15,6 +15,23 @@ void RotaryFunnel::begin() {
     mux = xSemaphoreCreateMutex();
 }
 
+// Write a method to get the FunnelPosition from a uint16_t
+RotaryFunnel::FunnelPosition RotaryFunnel::getPositionFromUint16(uint16_t position) {
+    switch (position) {
+        case 0:
+            return FunnelPosition::POSITION_0;
+        case 1:
+            return FunnelPosition::POSITION_90;
+        case 2:
+            return FunnelPosition::POSITION_180;
+        case 3:
+            return FunnelPosition::POSITION_270;
+        default:
+            // Default to POSITION_0 if unknown
+            return FunnelPosition::POSITION_0;
+    }
+}
+
 void RotaryFunnel::rotateToPosition(FunnelPosition position) {
     // Calculate the shortest path from current to target position
     // Each position represents 90 degrees
