@@ -19,6 +19,8 @@ public:
 
     void begin();
 
+    static FunnelPosition getPositionFromUint16(uint16_t position);
+
 private:
     int number_of_steps;
     int m1;
