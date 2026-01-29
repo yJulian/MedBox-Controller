@@ -63,9 +63,7 @@ void MessageParser::parseMessage(const String& message) {
                 RotaryFunnel::FunnelPosition funnelPosition = RotaryFunnel::getPositionFromUint16(position);
 
                 if (compartmentSet != nullptr) {
-                    #ifdef DEBUG
-                    Serial.printf("[MessageParser] Moving funnel to position: %d\n", position);
-                    #endif
+                    //Serial.printf("[MessageParser] Moving funnel to position: %d\n", position);
                     compartmentSet->moveFunnelToPosition(funnelPosition);
                 } else {
                     Serial.println("[MessageParser] ERROR: CompartmentSet not initialized!");

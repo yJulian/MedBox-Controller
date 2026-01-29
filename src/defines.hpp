@@ -3,6 +3,8 @@
 
 #define MAX_SLAVES 10
 
+
+
 /**
  * @file defines.hpp
  * @brief Central configuration file for MedBox Controller
@@ -68,14 +70,26 @@
 // ============================================================================
 
 /**
+ * PIN Ordering Help 
+ * Pin on Motor Driver -> #Pin
+ * -------------------------
+ * IN1            -> Pin1
+ * IN2            -> Pin3
+ * IN3            -> Pin2
+ * IN4            -> Pin4
+ */
+
+#define DEBUG
+
+/**
  * @brief Compartment A Stepper Motor Pins (4-wire)
  * 
  * Four pins for controlling the stepper motor coils (m1, m2, m3, m4)
  * Used with the Stepper library for precise step control
  */
 #define COMPARTMENT_A_PIN1 22
-#define COMPARTMENT_A_PIN2 23
 #define COMPARTMENT_A_PIN3 18
+#define COMPARTMENT_A_PIN2 23
 #define COMPARTMENT_A_PIN4 5
 
 /**
@@ -85,8 +99,8 @@
  * Used with the Stepper library for precise step control
  */
 #define COMPARTMENT_B_PIN1 14
-#define COMPARTMENT_B_PIN2 16
 #define COMPARTMENT_B_PIN3 17
+#define COMPARTMENT_B_PIN2 16
 #define COMPARTMENT_B_PIN4 19
 
 /**
@@ -96,8 +110,8 @@
  * Used to rotate the funnel between different positions (0°, 90°, 180°, 270°)
  */
 #define FUNNEL_PIN1 32
-#define FUNNEL_PIN2 25
 #define FUNNEL_PIN3 26
+#define FUNNEL_PIN2 25
 #define FUNNEL_PIN4 27
 
 /**

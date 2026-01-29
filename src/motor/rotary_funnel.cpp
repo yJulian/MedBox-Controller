@@ -40,13 +40,16 @@ void RotaryFunnel::rotateToPosition(FunnelPosition position) {
     
     // Calculate angular difference (-270 to +270)
     int difference = targetDegrees - currentDegrees;
-    
+
     // Normalize to shortest path (-180 to +180)
     if (difference > 180) {
         difference -= 360;
     } else if (difference < -180) {
         difference += 360;
     }
+
+    // print the difference
+    Serial.printf("[RotaryFunnel] Difference: %d°\n", difference);
     
     // Calculate steps needed (360 degrees = number_of_steps)
     int stepsToMove = (difference * number_of_steps) / 360;
