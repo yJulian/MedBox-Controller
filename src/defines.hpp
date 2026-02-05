@@ -87,10 +87,10 @@
  * Four pins for controlling the stepper motor coils (m1, m2, m3, m4)
  * Used with the Stepper library for precise step control
  */
-#define COMPARTMENT_A_PIN1 22
-#define COMPARTMENT_A_PIN3 18
-#define COMPARTMENT_A_PIN2 23
-#define COMPARTMENT_A_PIN4 5
+#define COMPARTMENT_A_PIN1 32 // 22
+#define COMPARTMENT_A_PIN3 26 // 18
+#define COMPARTMENT_A_PIN2 25 // 23
+#define COMPARTMENT_A_PIN4 27 // 5
 
 /**
  * @brief Compartment B Stepper Motor Pins (4-wire)
@@ -109,10 +109,10 @@
  * Four pins for controlling the rotary funnel stepper motor coils (m1, m2, m3, m4)
  * Used to rotate the funnel between different positions (0°, 90°, 180°, 270°)
  */
-#define FUNNEL_PIN1 32
-#define FUNNEL_PIN3 26
-#define FUNNEL_PIN2 25
-#define FUNNEL_PIN4 27
+#define FUNNEL_PIN1 22 // 32 
+#define FUNNEL_PIN3 18 // 26 
+#define FUNNEL_PIN2 23 // 25 
+#define FUNNEL_PIN4 5 // 27 
 
 /**
  * @brief Steps per revolution for stepper motors
