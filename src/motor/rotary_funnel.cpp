@@ -10,6 +10,9 @@ RotaryFunnel::RotaryFunnel(int number_of_steps, int m1, int m2, int m3, int m4)
 }
 
 void RotaryFunnel::begin() {
+    prefs.begin("funnel", false);
+    prefs.getInt("position", 0);
+    
     stepperMotor.setSpeed(SPEED_RPM);
     stepperMotor.begin();
     mux = xSemaphoreCreateMutex();
@@ -32,11 +35,28 @@ RotaryFunnel::FunnelPosition RotaryFunnel::getPositionFromUint16(uint16_t positi
     }
 }
 
+int RotaryFunnel::getDegrees(FunnelPosition position) {
+    switch (position) {
+        case POSITION_0:
+            return 0;
+        case POSITION_90:
+            return 90;
+        case POSITION_180:
+            return 180;
+        case POSITION_270:
+            return 270;
+        default:
+            return 0;
+    }
+}
+
 void RotaryFunnel::rotateToPosition(FunnelPosition position) {
     // Calculate the shortest path from current to target position
     // Each position represents 90 degrees
-    int currentDegrees = static_cast<int>(currentPosition) * 90;
-    int targetDegrees = static_cast<int>(position) * 90;
+    int currentDegrees = prefs.getInt("position", 0);
+    int targetDegrees = getDegrees(position);
+
+    printf("[RotaryFunnel] Current position: %d°, Target position: %d°\n", currentDegrees, targetDegrees);
     
     // Calculate angular difference (-270 to +270)
     int difference = targetDegrees - currentDegrees;
@@ -63,6 +83,7 @@ void RotaryFunnel::rotateToPosition(FunnelPosition position) {
     if (stepsToMove != 0) {
         xSemaphoreTake(mux, portMAX_DELAY);
         stepperMotor.stepAndStop(stepsToMove);
+        prefs.putInt("position", targetDegrees);
         currentPosition = position;
         xSemaphoreGive(mux);
     }

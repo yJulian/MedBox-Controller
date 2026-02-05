@@ -3,6 +3,8 @@
 #include "stepper/Stepper.h"
 #include <freertos/FreeRTOS.h>
 #include <freertos/semphr.h>
+#include <Preferences.h>
+
 
 class RotaryFunnel {
 public:
@@ -28,8 +30,11 @@ private:
     int m3;
     int m4;
     SemaphoreHandle_t mux;
+    Preferences prefs;
 
-    FunnelPosition currentPosition = POSITION_0;
+    int currentPosition = 0;
+
+    int getDegrees(FunnelPosition position);
 
     Stepper stepperMotor;
 };

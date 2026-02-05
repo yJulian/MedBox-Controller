@@ -44,7 +44,7 @@ void MessageParser::parseMessage(const String& message) {
     Serial.printf("[MessageParser] Message type: %d\n", messageType);
     switch (messageType) {
         case 3: { // Command Message
-            int compartment = doc["message"]["compartmentNumber"];
+            int compartment = doc["message"]["compartmentPosition"];
             int amount = doc["message"]["amountOfPillsToDispense"];
 
             if (compartmentSet != nullptr) {

@@ -62,7 +62,7 @@
  * 
  * Master device TX connects to Slave device RX and vice versa. 
  */
-#define TX_PIN 17
+#define TX_PIN 33
 #define RX_PIN 16
 
 // ============================================================================
