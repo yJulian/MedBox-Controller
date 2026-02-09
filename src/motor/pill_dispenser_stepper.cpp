@@ -28,9 +28,9 @@ void PillDispenserStepper::dispensePillCompartmentA() {
     xSemaphoreTake(mux, portMAX_DELAY);
     stepperMotor.step(90 * STEPPER_STEPS_PER_REV / 360);
     vTaskDelay(STEP_DELAY_MS / portTICK_PERIOD_MS);
-    stepperMotor.stepAndStop(-91 * STEPPER_STEPS_PER_REV / 360);
+    stepperMotor.stepAndStop(-93 * STEPPER_STEPS_PER_REV / 360);
     vTaskDelay(STEP_DELAY_MS / portTICK_PERIOD_MS);
-    stepperMotor.stepAndStop(1 * STEPPER_STEPS_PER_REV / 360);
+    stepperMotor.stepAndStop(3 * STEPPER_STEPS_PER_REV / 360);
     xSemaphoreGive(mux);
 }
 
@@ -38,9 +38,9 @@ void PillDispenserStepper::dispensePillCompartmentB() {
     xSemaphoreTake(mux, portMAX_DELAY);
     stepperMotor.step(-90 * STEPPER_STEPS_PER_REV / 360);
     vTaskDelay(STEP_DELAY_MS / portTICK_PERIOD_MS);
-    stepperMotor.stepAndStop(91 * STEPPER_STEPS_PER_REV / 360);
+    stepperMotor.stepAndStop(93 * STEPPER_STEPS_PER_REV / 360);
     vTaskDelay(STEP_DELAY_MS / portTICK_PERIOD_MS);
-    stepperMotor.stepAndStop(-1 * STEPPER_STEPS_PER_REV / 360);
+    stepperMotor.stepAndStop(-3 * STEPPER_STEPS_PER_REV / 360);
     xSemaphoreGive(mux);
 }
 
