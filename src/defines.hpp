@@ -26,6 +26,17 @@
 #define RESET_PIN  15
 
 /**
+ * @brief Special offline mode pin (active LOW with internal pull-up)
+ * 
+ * When held LOW during boot, triggers offline BLE control mode.
+ * Device will host a BLE GATT server for motor control instead of connecting to WiFi.
+ */
+#define SPECIAL_MODE_PIN  4
+
+#define BLE_CONTROL_SERVICE_UUID "0000ff01-0000-1000-8000-00805f9b34fb"
+#define BLE_CONTROL_CHAR_UUID    "0000ff02-0000-1000-8000-00805f9b34fb"
+
+/**
  * @brief Status LED pin
  * 
  * Used to display various status patterns:

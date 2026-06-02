@@ -6,6 +6,9 @@ void initializeGPIO() {
     // Reading LOW during boot triggers WiFi credential reset
     pinMode(RESET_PIN, INPUT_PULLUP);
     
+    // Configure special mode pin with pull-up resistor
+    pinMode(SPECIAL_MODE_PIN, INPUT_PULLUP);
+    
     // Configure LED pin for output to display status patterns
     pinMode(LED_PIN, OUTPUT);
 
@@ -24,4 +27,9 @@ void initializeGPIO() {
 bool isMaster() {
     // Determine Master/Slave role based on SERIAL_IN_PIN state at boot
     return digitalRead(SERIAL_IN_PIN) == LOW;
+}
+
+bool isSpecialModeActive() {
+    // Determine if special offline mode is active (pin connected to GND)
+    return digitalRead(SPECIAL_MODE_PIN) == LOW;
 }

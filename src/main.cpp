@@ -14,17 +14,20 @@
 #include "network/websocket_helper.hpp"
 #include "network/communication_helper.hpp"
 #include "network/message_parser.hpp"
+#include "network/ble_control_helper.hpp"
 #include "motor/compartment_set.hpp"
 #include "motor/pill_dispenser_stepper.hpp"
 #include "motor/rotary_funnel.hpp"
 
 // Global state
 bool wifi_connected = false;
+bool special_ble_mode = false;
 
 // Helper instances
 WifiHelper wifiHelper;
 WebSocketHelper wsHelper;
 CommunicationHelper commHelper;
+BleControlHelper bleControlHelper;
 
 MessageParser msgParser;
 
@@ -75,6 +78,8 @@ void setup() {
 
   // Configure GPIO pins (LED and Reset button)
   initializeGPIO();
+
+  special_ble_mode = isSpecialModeActive();
 
   // Create LED task on Core 1 for non-blocking status display
   xTaskCreatePinnedToCore(
@@ -132,8 +137,17 @@ void setup() {
   // Set compartment set in message parser
   msgParser.setCompartmentSet(compartmentSet);
 
-  // Only master device manages WiFi and WebSocket
-  if (master) {
+  // Determine mode based on pin state and master/slave role
+  if (special_ble_mode) {
+    Serial.println("[Setup] Starting in special Offline BLE Control mode...");
+    wifi_connected = false;
+
+    bleControlHelper.startServer([](const String& data) {
+      Serial.println("[BLE Control] Command received, parsing and forwarding...");
+      msgParser.parseMessage(data);
+      commHelper.sendUart(data);
+    });
+  } else if (master) {
     wifi_connected = wifiHelper.connect();
 
     // Initialize WebSocket if WiFi connection succeeded
@@ -167,7 +181,9 @@ void loop() {
   // Process communication helper (UART data reception)
   commHelper.loop();
   
-  if (!wifi_connected) {
+  if (special_ble_mode) {
+    bleControlHelper.loop();
+  } else if (!wifi_connected) {
     // WiFi not connected - run BLE configuration loop
     wifiHelper.loop();
   } else {

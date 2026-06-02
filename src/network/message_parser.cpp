@@ -31,7 +31,7 @@ void MessageParser::parseMessage(const String& message) {
 
     String targetMac = doc["targetBoxMAC"].as<String>();
     Serial.printf("Target: '%s', This Box: '%s'\n", targetMac.c_str(), targetBoxMac.c_str());
-    if (targetMac != targetBoxMac) {
+    if (targetMac.length() > 0 && targetMac != targetBoxMac) {
         #ifdef DEBUG
         Serial.printf("Target: '%s', This Box: '%s'\n", targetMac.c_str(), targetBoxMac.c_str());
         #endif
