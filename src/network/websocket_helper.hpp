@@ -6,6 +6,9 @@
 #include <WebSocketsClient.h>
 #include <ArduinoJson.h>
 
+// Forward declaration to avoid circular dependency in header
+class CommunicationHelper;
+
 /**
  * @brief WebSocket client helper for MedBox backend communication
  * 
@@ -20,6 +23,8 @@
  */
 class WebSocketHelper {
 public:
+    using WebSocketCallback = std::function<void(const String& data)>;
+
     WebSocketHelper();
     
     /**
@@ -54,8 +59,21 @@ public:
     
     bool shouldEnumerate();
 
+    /**
+     * @brief Register CommunicationHelper to forward incoming WebSocket data via UART
+     * @param comm Pointer to CommunicationHelper instance
+     */
+    void setCommunicationHelper(CommunicationHelper* comm);
+
+        /**
+     * @brief Set callback for received WebSocket data
+     * @param callback Function to call when WebSocket data is received
+     */
+    void setWebSocketCallback(WebSocketCallback callback);
+
 private:
     WebSocketsClient webSocket;
+    WebSocketCallback webSocketCallback;
     bool connected;
     
     /**
@@ -90,6 +108,8 @@ private:
      * Required because WebSocketsClient uses C-style callbacks.
      */
     static WebSocketHelper* instance;
+
+    CommunicationHelper* communicationHelper = nullptr;
 
     bool shouldEnumerateFlag;
 };

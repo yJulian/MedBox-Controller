@@ -19,4 +19,11 @@ void initializeGPIO();
  */
 bool isMaster();
 
+/**
+ * @brief Check if special offline BLE control mode is requested
+ * 
+ * @return true if SPECIAL_MODE_PIN is connected to ground, false otherwise
+ */
+bool isSpecialModeActive();
+
 #endif // GPIO_HPP

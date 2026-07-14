@@ -1,0 +1,40 @@
+#pragma once
+
+#include "stepper/Stepper.h"
+#include <freertos/FreeRTOS.h>
+#include <freertos/semphr.h>
+#include <Preferences.h>
+
+
+class RotaryFunnel {
+public:
+    RotaryFunnel(int number_of_steps, int m1, int m2, int m3, int m4);
+
+    enum FunnelPosition {
+        POSITION_0,
+        POSITION_90,
+        POSITION_180,
+        POSITION_270
+    };  
+    
+    void rotateToPosition(FunnelPosition position);
+
+    void begin();
+
+    static FunnelPosition getPositionFromUint16(uint16_t position);
+
+private:
+    int number_of_steps;
+    int m1;
+    int m2;
+    int m3;
+    int m4;
+    SemaphoreHandle_t mux;
+    Preferences prefs;
+
+    int currentPosition = 0;
+
+    int getDegrees(FunnelPosition position);
+
+    Stepper stepperMotor;
+};

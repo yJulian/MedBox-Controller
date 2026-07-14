@@ -88,6 +88,9 @@ bool WifiHelper::connect() {
     }
 
     Serial.println("[WiFi] Failed to establish connection.");
+    ledState = 0xAAAA;  // Set LED pattern for connection failure
+    delay(2000);    
+    ESP.restart();  // Restart to retry connection
     return false;
 }
 

@@ -5,6 +5,7 @@
  * Orchestrates WiFi connection, WebSocket communication, and LED status display.
  * Uses FreeRTOS task for non-blocking LED pattern animation.
  */
+#define DEBUG
 
 #include <Arduino.h>
 #include <WiFi.h>
@@ -12,14 +13,30 @@
 #include "network/wifi_helper.hpp"
 #include "network/websocket_helper.hpp"
 #include "network/communication_helper.hpp"
+#include "network/message_parser.hpp"
+#include "network/ble_control_helper.hpp"
+#include "motor/compartment_set.hpp"
+#include "motor/pill_dispenser_stepper.hpp"
+#include "motor/pill_dispenser_encoder.hpp" 
+#include "motor/rotary_funnel.hpp"
 
 // Global state
 bool wifi_connected = false;
+bool special_ble_mode = false;
 
 // Helper instances
 WifiHelper wifiHelper;
 WebSocketHelper wsHelper;
 CommunicationHelper commHelper;
+BleControlHelper bleControlHelper;
+
+MessageParser msgParser;
+
+// Motor control instances
+PillDispenser* dispenserA = nullptr;
+PillDispenser* dispenserB = nullptr;
+CompartmentSet* compartmentSet = nullptr;
+RotaryFunnel* rotaryFunnel = nullptr;
 
 /**
  * @brief Global LED state pattern (16-bit rotating pattern)
@@ -63,11 +80,13 @@ void setup() {
   // Configure GPIO pins (LED and Reset button)
   initializeGPIO();
 
+  special_ble_mode = isSpecialModeActive();
+
   // Create LED task on Core 1 for non-blocking status display
   xTaskCreatePinnedToCore(
     ledTask,          // Task function
     "ledTask",        // Task name (for debugging)
-    128,  //4096,     // Stack size in bytes
+    2048,             // Stack size in bytes
     NULL,             // Task parameter (unused)
     1,                // Priority (1 = low)
     NULL,             // Task handle (not needed)
@@ -76,29 +95,83 @@ void setup() {
   
   master = isMaster();
 
+  // Initialize Compartment Set with Stepper Motors
+  // Each compartment uses a 4-wire stepper motor (m1, m2, m3, m4)
+  dispenserA = new PillDispenserEncoder(
+    STEPPER_STEPS_PER_REV,
+    COMPARTMENT_A_PIN1,
+    COMPARTMENT_A_PIN2,
+    COMPARTMENT_A_PIN3,
+    COMPARTMENT_A_PIN4,
+    COMPARTMENT_A_ENCODER
+  );
+  dispenserB = new PillDispenserEncoder(
+    STEPPER_STEPS_PER_REV,
+    COMPARTMENT_B_PIN1,
+    COMPARTMENT_B_PIN2,
+    COMPARTMENT_B_PIN3,
+    COMPARTMENT_B_PIN4,
+    COMPARTMENT_B_ENCODER
+  );
+    // Initialize Rotary Funnel
+  rotaryFunnel = new RotaryFunnel(
+    STEPPER_STEPS_PER_REV,
+    FUNNEL_PIN1,
+    FUNNEL_PIN2,
+    FUNNEL_PIN3,
+    FUNNEL_PIN4
+  );
+
+  // Create and initialize compartment set
+  compartmentSet = new CompartmentSet(dispenserA, dispenserB, rotaryFunnel);
+  compartmentSet->begin();
+  
+  Serial.println("[Setup] Rotary Funnel initialized");
+
   // Initialize communication helper (UART, Serial, Parallel pins)
   commHelper.begin(master);
   
   // Attempt WiFi connection (or start BLE config if needed)
   wifi_connected = true;
 
-  // Only master device manages WiFi and WebSocket
-  if (master) {
+  // Initialize message parser to handle incoming messages
+  msgParser.setTargetBoxMac(WiFi.macAddress());
+  
+  // Set compartment set in message parser
+  msgParser.setCompartmentSet(compartmentSet);
+
+  // Determine mode based on pin state and master/slave role
+  if (special_ble_mode) {
+    Serial.println("[Setup] Starting in special Offline BLE Control mode...");
+    wifi_connected = false;
+
+    bleControlHelper.startServer([](const String& data) {
+      Serial.println("[BLE Control] Command received, parsing and forwarding...");
+      msgParser.parseMessage(data);
+      commHelper.sendUart(data);
+    });
+  } else if (master) {
     wifi_connected = wifiHelper.connect();
 
     // Initialize WebSocket if WiFi connection succeeded
     if (wifi_connected) {
       Serial.println("[Setup] WiFi connected, initializing WebSocket...");
+      wsHelper.setCommunicationHelper(&commHelper);
       wsHelper.begin();
     } else {
       Serial.println("[Setup] WiFi not connected, BLE configuration active");
     }
+    wsHelper.setWebSocketCallback([](const String& data) {
+      // Also parse the message directly
+      Serial.println("[WebSocket 1] Message received, parsing...");
+      msgParser.parseMessage(data);
+    });
   } else {
     Serial.println("[Setup] Configured as SLAVE device, skipping WiFi/WebSocket setup");
 
+    // Register UART callback to parse incoming messages
     commHelper.setUartCallback([](const String& data) {
-      Serial.print("[UART Callback] Received data: ");
-      Serial.println(data);
+      msgParser.parseMessage(data);
     });
 
     ledState = 0x0000; // Indicate slave mode with LED pattern
@@ -111,7 +184,9 @@ void loop() {
   // Process communication helper (UART data reception)
   commHelper.loop();
   
-  if (!wifi_connected) {
+  if (special_ble_mode) {
+    bleControlHelper.loop();
+  } else if (!wifi_connected) {
     // WiFi not connected - run BLE configuration loop
     wifiHelper.loop();
   } else {
