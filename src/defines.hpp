@@ -102,6 +102,7 @@
 #define COMPARTMENT_A_PIN3 26 // 18
 #define COMPARTMENT_A_PIN2 25 // 23
 #define COMPARTMENT_A_PIN4 27 // 5
+#define COMPARTMENT_A_ENCODER 34
 
 /**
  * @brief Compartment B Stepper Motor Pins (4-wire)
@@ -113,6 +114,7 @@
 #define COMPARTMENT_B_PIN3 17
 #define COMPARTMENT_B_PIN2 16
 #define COMPARTMENT_B_PIN4 19
+#define COMPARTMENT_B_ENCODER 35
 
 /**
  * @brief Rotary Funnel Stepper Motor Pins (4-wire)

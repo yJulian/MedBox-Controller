@@ -17,6 +17,7 @@
 #include "network/ble_control_helper.hpp"
 #include "motor/compartment_set.hpp"
 #include "motor/pill_dispenser_stepper.hpp"
+#include "motor/pill_dispenser_encoder.hpp" 
 #include "motor/rotary_funnel.hpp"
 
 // Global state
@@ -96,19 +97,21 @@ void setup() {
 
   // Initialize Compartment Set with Stepper Motors
   // Each compartment uses a 4-wire stepper motor (m1, m2, m3, m4)
-  dispenserA = new PillDispenserStepper(
+  dispenserA = new PillDispenserEncoder(
     STEPPER_STEPS_PER_REV,
     COMPARTMENT_A_PIN1,
     COMPARTMENT_A_PIN2,
     COMPARTMENT_A_PIN3,
-    COMPARTMENT_A_PIN4
+    COMPARTMENT_A_PIN4,
+    COMPARTMENT_A_ENCODER
   );
-  dispenserB = new PillDispenserStepper(
+  dispenserB = new PillDispenserEncoder(
     STEPPER_STEPS_PER_REV,
     COMPARTMENT_B_PIN1,
     COMPARTMENT_B_PIN2,
     COMPARTMENT_B_PIN3,
-    COMPARTMENT_B_PIN4
+    COMPARTMENT_B_PIN4,
+    COMPARTMENT_B_ENCODER
   );
     // Initialize Rotary Funnel
   rotaryFunnel = new RotaryFunnel(

@@ -16,4 +16,5 @@ public:
 private:
     uint8_t control_switch;
     bool calibrate();
+    void returnToHome(int direction);
 };

@@ -27,12 +27,12 @@ void CommunicationHelper::begin(bool isMaster) {
     this->isMaster = isMaster;
     if (isMaster) {
         enumerationUartHandler = std::bind(&CommunicationHelper::enumerationUartMasterHandler, this, std::placeholders::_1);
-        uart.begin(9600, SERIAL_8N1, RX_PIN, TX_PIN);
+        //uart.begin(9600, SERIAL_8N1, RX_PIN, TX_PIN);
         // Use pull-down on RX pin (idle state is now LOW with inversion)
         Serial.println("[CommHelper] Configured as MASTER with inverted UART and RX pull-down");
     } else {
         enumerationUartHandler = std::bind(&CommunicationHelper::enumerationUartSlaveHandler, this, std::placeholders::_1);
-        uart.begin(9600, SERIAL_8N1, TX_PIN, RX_PIN);
+        //uart.begin(9600, SERIAL_8N1, TX_PIN, RX_PIN);
         // Use pull-down on RX pin (TX_PIN for slave due to swapped pins)
         Serial.println("[CommHelper] Configured as SLAVE with inverted UART and RX pull-down");
         // Slave starts with enumeration handler
